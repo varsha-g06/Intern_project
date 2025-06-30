@@ -71,10 +71,23 @@
 
 <script>
   async function loadProfile() {
+    const studentId = localStorage.getItem('studentId');
+    const token = localStorage.getItem('authToken');
+
+    if (!studentId || !token) {
+      alert("You are not logged in.");
+      window.location.href = "login.html";
+      return;
+    }
+
     try {
-      const response = await axios.get('http://localhost:4000/api/student');
-      const data = response.data[0]; 
-      if (!data) throw new Error('no faculty found');
+      const response = await axios.get(`http://localhost:4000/api/student/${studentId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const data = response.data;
 
       document.getElementById('name').textContent = data.name;
       document.getElementById('regNo').textContent = data.register_number;
@@ -83,19 +96,20 @@
       document.getElementById('email').textContent = data.email;
       document.getElementById('phone').textContent = data.phone || 'N/A';
       document.getElementById('gender').textContent = data.gender || 'N/A';
-      document.getElementById('dob').textContent = new Date(data.dob).toLocaleDateString('en-IN'); // format: DD/MM/YYYY
-
-      // ✅ Photo fallback
+      document.getElementById('dob').textContent = new Date(data.dob).toLocaleDateString('en-IN');
       document.getElementById('profilePhoto').src = data.photo_url || 'assets/icon.png';
 
     } catch (error) {
       console.error('Failed to load profile:', error);
-      document.getElementById('name').textContent = 'Error loading data';
+      alert("Error loading student profile. Please login again.");
+      localStorage.clear();
+      window.location.href = "login.html";
     }
   }
 
   window.addEventListener('DOMContentLoaded', loadProfile);
 </script>
+
 
 </body>
 </html>

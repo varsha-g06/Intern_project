@@ -1,36 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Dashboard | Student Portal</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="student.css">
-  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="student.css" />
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
-  <!-- Side Drawer Overlay -->
- <div class="side-drawer" id="sideDrawer">
-  <div class="drawer-content">
-    <ul class="drawer-menu">
-      <li><a href="student.html"><span class="menu-icon-text">🏠</span>Home</a></li>
-      <li><a href="stu-profile.html"><span class="menu-icon-text">👤</span>Profile</a></li>
-      <li><a href="attendance.html"><span class="menu-icon-text">📅</span>Attendance</a></li>
-      <!-- Add other menu items here -->
-    </ul>
-
-    <ul class="drawer-menu logout-menu">
-      <li><a href="login.html"><span class="menu-icon-text">🚪</span>Logout</a></li>
-    </ul>
+  <!-- Side Drawer -->
+  <div class="side-drawer" id="sideDrawer">
+    <div class="drawer-content">
+      <ul class="drawer-menu">
+        <li><a href="student.html"><span class="menu-icon-text">🏠</span>Home</a></li>
+        <li><a href="stu-profile.html"><span class="menu-icon-text">👤</span>Profile</a></li>
+        <li><a href="attendance.html"><span class="menu-icon-text">📅</span>Attendance</a></li>
+      </ul>
+      <ul class="drawer-menu logout-menu">
+        <li><a href="#" onclick="logout()"><span class="menu-icon-text">🚪</span>Logout</a></li>
+      </ul>
+    </div>
   </div>
-</div>
 
-
+  <!-- Header -->
   <header class="dashboard-header">
     <div class="header-left">
       <span class="header-title">Dashboard</span>
     </div>
     <div class="header-right">
-      <!-- Hamburger menu icon -->
       <button class="hamburger" aria-label="Open menu" onclick="openDrawer()">
         <span class="bar"></span>
         <span class="bar"></span>
@@ -39,13 +36,14 @@
     </div>
   </header>
 
+  <!-- Main Content -->
   <main>
     <section class="student-profile-card">
-      <img src="assets/hannah.jpg" alt="Student Photo" class="student-photo"/>
+      <img src="assets/icon.png" alt="Student Photo" class="student-photo" />
       <div class="student-info">
-        <div class="student-name">VARSHA G</div>
-        <div class="student-id">23UCS531</div>
-        <div class="student-course">III-Year-B.Sc COMPUTER SCIENCE</div>
+        <div class="student-name">Loading...</div>
+        <div class="student-id"></div>
+        <div class="student-course"></div>
       </div>
     </section>
 
@@ -55,27 +53,27 @@
       <div class="section-title">MY COLLEGE</div>
       <div class="college-features-grid">
         <a href="stu-profile.html" class="feature-card">
-          <img src="assets/pro.png" alt="My profile">
-          <span> My Profile</span>
+          <img src="assets/pro.png" alt="My profile" />
+          <span>My Profile</span>
         </a>
         <a href="courses.html" class="feature-card">
-          <img src="assets/courseic.png" alt="Courses">
+          <img src="assets/courseic.png" alt="Courses" />
           <span>Courses</span>
         </a>
         <a href="attendance.html" class="feature-card">
-          <img src="assets/atticon.png" alt="Attendance">
+          <img src="assets/atticon.png" alt="Attendance" />
           <span>Attendance</span>
         </a>
         <a href="marks.html" class="feature-card">
-          <img src="assets/marksic.webp" alt="Marks">
+          <img src="assets/marksic.webp" alt="Marks" />
           <span>Marks</span>
         </a>
         <a href="notes.html" class="feature-card">
-          <img src="assets/notesic.webp" alt="Notes">
+          <img src="assets/notesic.webp" alt="Notes" />
           <span>Notes/Resources</span>
         </a>
         <a href="announcement.html" class="feature-card">
-          <img src="assets/annoic.jpg" alt="Annocement">
+          <img src="assets/annoic.jpg" alt="Announcement" />
           <span>Announcement</span>
         </a>
       </div>
@@ -83,28 +81,147 @@
 
     <section class="timetable-section">
       <div class="section-title">UPCOMING TIME TABLE</div>
-        <div class="timetable-info">No day order available</div>
+      <div class="timetable-info">No day order available</div>
     </section>
   </main>
 
+  <!-- Footer -->
   <footer>
     <div class="footer-bar">
       2025 © <strong>ST. XAVIER'S COLLEGE (AUTONOMOUS)</strong>
     </div>
   </footer>
+
+  <!-- Script Section -->
   <script>
     function openDrawer() {
-      document.getElementById('sideDrawer').classList.add('open');
-      document.getElementById('sideDrawerOverlay').classList.add('show');
+      document.getElementById("sideDrawer").classList.add("open");
     }
+
     function closeDrawer() {
-      document.getElementById('sideDrawer').classList.remove('open');
-      document.getElementById('sideDrawerOverlay').classList.remove('show');
+      document.getElementById("sideDrawer").classList.remove("open");
     }
-    document.addEventListener('keydown', function(e) {
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = "login.html";
+    }
+
+    document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") closeDrawer();
     });
+
+    // 👉 Load student data from backend
+    window.onload = () => {
+      const studentId = localStorage.getItem("studentId");
+      const token = localStorage.getItem("authToken");
+
+      if (!studentId || !token) {
+        alert("Not logged in. Redirecting...");
+        window.location.href = "login.html";
+        return;
+      }
+
+      axios
+        .get(`http://localhost:4000/api/student/${studentId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        .then((response) => {
+          const student = response.data;
+          document.querySelector(".student-name").textContent = student.name;
+          document.querySelector(".student-id").textContent = student.register_number;
+          document.querySelector(".student-course").textContent = `${student.year}-Year - ${student.course}`;
+          if (student.photo_url) {
+            document.querySelector(".student-photo").src = student.photo_url;
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to load student:", error);
+          alert("Error fetching student info. Please login again.");
+          localStorage.clear();
+          window.location.href = "login.html";
+        });
+    };
+    
+  function openDrawer() {
+    document.getElementById("sideDrawer").classList.add("open");
+  }
+
+  function closeDrawer() {
+    document.getElementById("sideDrawer").classList.remove("open");
+  }
+
+  function logout() {
+    localStorage.clear();
+    window.location.href = "login.html";
+  }
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") closeDrawer();
+  });
+
+  // 👉 Load student data and timetable
+  window.onload = () => {
+    const studentId = localStorage.getItem("studentId");
+    const token = localStorage.getItem("authToken");
+
+    if (!studentId || !token) {
+      alert("Not logged in. Redirecting...");
+      window.location.href = "login.html";
+      return;
+    }
+
+    // Fetch student profile
+    axios
+      .get(`http://localhost:4000/api/student/${studentId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((response) => {
+        const student = response.data;
+        document.querySelector(".student-name").textContent = student.name;
+        document.querySelector(".student-id").textContent = student.register_number;
+        document.querySelector(".student-course").textContent = `${student.year}-Year - ${student.course}`;
+        if (student.photo_url) {
+          document.querySelector(".student-photo").src = student.photo_url;
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load student:", error);
+        alert("Error fetching student info. Please login again.");
+        localStorage.clear();
+        window.location.href = "login.html";
+      });
+
+    // Fetch timetable
+    axios
+      .get("http://localhost:4000/api/student/all-timetable", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        const { today, schedule } = res.data;
+        const timetableSection = document.querySelector(".timetable-info");
+        if (today && schedule) {
+          timetableSection.innerHTML = `
+            <strong>${today}</strong><br/>
+            <ul>${schedule.map(period => `<li>${period}</li>`).join("")}</ul>
+          `;
+        } else {
+          timetableSection.textContent = res.data.message || "No timetable available.";
+        }
+      })
+      .catch((err) => {
+        console.error("Error loading timetable:", err);
+        document.querySelector(".timetable-info").textContent = "Could not load timetable.";
+      });
+  };
+
+
   </script>
-  
 </body>
 </html>

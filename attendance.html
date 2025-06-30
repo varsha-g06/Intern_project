@@ -14,7 +14,7 @@
 
   <main class="attendance-main">
     <section class="attendance-profile">
-      <img src="" alt="Student Photo" class="attendance-photo" id="student-photo" />
+      <img src="assets/icon.png" alt="Student Photo" class="attendance-photo" id="student-photo" />
       <div class="attendance-student-info">
         <div class="attendance-student-name" id="student-name">Loading...</div>
         <div class="attendance-student-id" id="student-id"></div>
@@ -33,6 +33,7 @@
             <th>Attended</th>
             <th>Absent</th>
             <th>Percentage</th>
+             <th>updatedAt</th>
           </tr>
         </thead>
         <tbody id="attendance-tbody">
@@ -50,48 +51,98 @@
 
   <!-- Axios CDN -->
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-  
+
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      const studentId = localStorage.getItem("studentId");
+      const token = localStorage.getItem("authToken");
+
+      if (!studentId || !token) {
+        alert("You are not logged in!");
+        window.location.href = "login.html";
+        return;
+      }
+
       const studentPhoto = document.getElementById('student-photo');
       const studentName = document.getElementById('student-name');
-      const studentId = document.getElementById('student-id');
+      const studentIdElem = document.getElementById('student-id');
       const studentCourse = document.getElementById('student-course');
       const attendanceTbody = document.getElementById('attendance-tbody');
 
-      axios.get('attendance.json')
-        .then(response => {
-          const data = response.data;
-
-          // Update student info
-          studentPhoto.src = data.student.photo;
-          studentPhoto.alt = data.student.name;
-          studentName.textContent = data.student.name;
-          studentId.textContent = data.student.id;
-          studentCourse.textContent = data.student.course;
-
-          // Clear loading text
-          attendanceTbody.innerHTML = '';
-
-          // Add attendance rows
-          data.attendance.forEach(item => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td>${item.courseCode}</td>
-              <td>${item.courseTitle}</td>
-              <td>${item.classesHeld}</td>
-              <td>${item.attended}</td>
-              <td>${item.absent}</td>
-              <td>${item.percentage}</td>
-            `;
-            attendanceTbody.appendChild(tr);
-          });
-        })
-        .catch(error => {
-          console.error('Error loading attendance data:', error);
-          attendanceTbody.innerHTML = '<tr><td colspan="6">Failed to load attendance data.</td></tr>';
-          studentName.textContent = 'Error loading student info';
+      try {
+        // Get student profile
+        const studentRes = await axios.get(`http://localhost:4000/api/student/${studentId}`, {
+          headers: { Authorization: `Bearer ${token}` }
         });
+
+        const student = studentRes.data;
+        studentPhoto.src = student.photo_url || "assets/icon.png";
+        studentPhoto.alt = student.name;
+        studentName.textContent = student.name;
+        studentIdElem.textContent = student.register_number;
+        studentCourse.textContent = `${student.year}-Year - ${student.course}`;
+
+        // Get attendance
+        const attendanceRes = await axios.get(`http://localhost:4000/api/student/${studentId}/attendance`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const data = attendanceRes.data;
+        attendanceTbody.innerHTML = '';
+
+        if (data.length === 0) {
+          attendanceTbody.innerHTML = '<tr><td colspan="6">No attendance records found.</td></tr>';
+          return;
+        }
+
+        // Calculate and show attendance
+        const grouped = {};
+
+        data.forEach(item => {
+          const key = item.code;
+          if (!grouped[key]) {
+            grouped[key] = {
+              courseTitle: item.course,
+              code: item.code,
+              present: 0,
+              total: 0,
+                  latestDate: item.date
+
+            };
+          }
+          grouped[key].total += 1;
+          if (item.status.toLowerCase() === "present") {
+            grouped[key].present += 1;
+          }
+          // Update latest date if newer
+if (new Date(item.date) > new Date(grouped[key].latestDate)) {
+  grouped[key].latestDate = item.date;
+}
+        });
+
+        Object.values(grouped).forEach(item => {
+          const absent = item.total - item.present;
+          const percent = ((item.present / item.total) * 100).toFixed(1);
+          const formattedDate = new Date(item.latestDate).toLocaleDateString('en-GB'); // DD/MM/YYYY
+const tr = document.createElement('tr');
+tr.innerHTML = `
+  <td>${item.code}</td>
+  <td>${item.courseTitle}</td>
+  <td>${item.total}</td>
+  <td>${item.present}</td>
+  <td>${absent}</td>
+  <td>${percent}%</td>
+  <td>${formattedDate}</td>
+`;
+
+          attendanceTbody.appendChild(tr);
+        });
+
+      } catch (err) {
+        console.error("❌ Error loading data:", err);
+        attendanceTbody.innerHTML = '<tr><td colspan="6">Failed to load data.</td></tr>';
+        studentName.textContent = "Error loading profile";
+      }
     });
   </script>
 </body>

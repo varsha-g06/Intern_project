@@ -1,25 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>My Marks | Student Portal</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="marks.css">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="marks.css" />
 </head>
 <body>
-  <header class="marks-header" style="text-align: center;">
-    <button class="back-btn" onclick="window.history.back()" aria-label="Go Back">&#8592;</button>
-    <span class="marks-title">My Marks</span>
-  </header>
+  <header class="marks-header">
+  <button class="back-btn" onclick="window.history.back()" aria-label="Go Back">&#8592;</button>
+  <span class="marks-title" style="text-align: center;">📄 My Marks</span>
+</header>
+
 
   <main class="marks-main">
     <section class="marks-profile">
-      <img src="assets/hannah.jpg" alt="Student Photo" class="marks-photo"/>
+      <img src="assets/icon.png" alt="Student Photo" class="marks-photo" id="student-photo" />
       <div class="marks-student-info">
         <div class="marks-student-name" id="studentName">Loading...</div>
-        <div class="marks-student-id" id="studentId">Loading...</div>
-        <div class="marks-student-course" id="studentCourse">Loading...</div>
+        <div class="marks-student-id" id="studentId"></div>
+        <div class="marks-student-course" id="studentCourse"></div>
       </div>
     </section>
 
@@ -30,13 +30,12 @@
           <tr>
             <th>Course Code</th>
             <th>Course Title</th>
-          
-            <th>Total</th>
-          
+            <th>Total Marks</th>
+            <th>Updated At</th>
           </tr>
         </thead>
         <tbody id="marksTableBody">
-          <tr><td colspan="6">Loading marks...</td></tr>
+          <tr><td colspan="4">Loading marks...</td></tr>
         </tbody>
       </table>
     </section>
@@ -48,41 +47,66 @@
     </div>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+    const studentId = localStorage.getItem('studentId');
+    const token = localStorage.getItem('authToken');
 
-      <script>
-  async function loadMarks() {
-    try {
-      const response = await fetch('marks.json'); // local file
-      if (!response.ok) throw new Error('Failed to load marks');
-
-      const data = await response.json();
-      const { student, marks } = data;
-
-      // Set student info
-      document.getElementById('studentName').textContent = student.name;
-      document.getElementById('studentId').textContent = student.regNo;
-      document.getElementById('studentCourse').textContent = `${student.year}-Year-${student.degree}`;
-
-      // Populate marks
-      const tbody = document.getElementById('marksTableBody');
-      tbody.innerHTML = '';
-
-      marks.forEach(mark => {
-        const row = `
-          <tr>
-            <td>${mark.courseCode}</td>
-            <td>${mark.courseTitle}</td>
-           
-            <td>${mark.total}</td>
-           
-          </tr>`;
-        tbody.innerHTML += row;
+    if (!studentId || !token) {
+      alert('You are not logged in!');
+      window.location.href = 'login.html';
+    } else {
+      // ✅ Load student profile
+      axios.get(`http://localhost:4000/api/student/${studentId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      .then(res => {
+        const student = res.data;
+        document.getElementById('studentName').textContent = student.name;
+        document.getElementById('studentId').textContent = student.register_number;
+        document.getElementById('studentCourse').textContent = `${student.year}-Year - ${student.course}`;
+        if (student.photo_url) {
+          document.getElementById('student-photo').src = student.photo_url;
+        }
+      })
+      .catch(err => {
+        console.error('❌ Failed to load student info:', err);
+        document.getElementById('studentName').textContent = 'Error loading profile';
       });
-    } catch (error) {
-      console.error('Error loading marks:', error);
-      document.getElementById('marksTableBody').innerHTML = '<tr><td colspan="3">Failed to load marks.</td></tr>';
-    }
-  }
 
-  window.addEventListener('DOMContentLoaded', loadMarks);
-</script>
+      // ✅ Load marks
+      axios.get(`http://localhost:4000/api/student/${studentId}/marks`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      .then(res => {
+        const tbody = document.getElementById('marksTableBody');
+        tbody.innerHTML = '';
+
+        if (res.data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4">No marks available.</td></tr>';
+          return;
+        }
+
+        res.data.forEach(mark => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${mark.courseCode}</td>
+            <td>${mark.courseName}</td>
+            <td>${mark.totalMarks}</td>
+            <td>${new Date(mark.updatedAt).toLocaleDateString()}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      })
+      .catch(err => {
+        console.error('❌ Failed to load marks:', err);
+        document.getElementById('marksTableBody').innerHTML = '<tr><td colspan="4">Failed to load marks.</td></tr>';
+      });
+    }
+  </script>
+</body>
+</html>

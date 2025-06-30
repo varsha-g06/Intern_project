@@ -24,6 +24,8 @@
 
         <div class="label">Faculty ID</div>
         <div class="value" id="facultyId">Loading...</div>
+<div class="label">Department</div>
+<div class="value" id="facultyDept">Loading...</div>
 
         
         <div class="label">Gender</div>
@@ -56,31 +58,46 @@
   <!-- Axios CDN -->
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script>
-    async function loadFacultyProfile() {
-  try {
-     
-    const response = await axios.get('http://localhost:4000/api/faculty');
-    const data = response.data[1];
-          if (!data) throw new Error('No student found');
+  async function loadFacultyProfile() {
+    const facultyId = localStorage.getItem('facultyId');
+    const token = localStorage.getItem('authToken');
 
-      
-    
-    document.getElementById('facultyName').textContent = data.name;
-    document.getElementById('facultyId').textContent = data.faculty_code;
-    
-    document.getElementById('facultyGender').textContent = data.gender;
-    document.getElementById('facultyDob').textContent = new Date(data.dob).toLocaleDateString();
-    document.getElementById('facultyEmail').textContent = data.email;
-    document.getElementById('facultyPhone').textContent = data.phone;
-    document.getElementById('facultyQual').textContent = data.qualification;
-    document.getElementById('facultyExp').textContent = data.experience_years;
-  } catch (error) {
-    console.error('Failed to load faculty profile:', error);
+    if (!facultyId || !token) {
+      alert("You are not logged in.");
+      window.location.href = "login.html";
+      return;
+    }
+
+    try {
+      const response = await axios.get(`http://localhost:4000/api/faculty/${facultyId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const data = response.data;
+
+      document.getElementById('facultyName').textContent = data.name;
+      document.getElementById('facultyId').textContent = data.faculty_code;
+      document.getElementById('facultyGender').textContent = data.gender || 'N/A';
+      document.getElementById('facultyDob').textContent = new Date(data.dob).toLocaleDateString('en-IN');
+      document.getElementById('facultyEmail').textContent = data.email;
+      document.getElementById('facultyPhone').textContent = data.phone || 'N/A';
+      document.getElementById('facultyQual').textContent = data.qualification || 'N/A';
+      document.getElementById('facultyExp').textContent = data.experience_years || '0';
+      document.getElementById('facultyDept').textContent = data.department?.name || 'N/A';
+
+      if (data.photo_url) {
+        document.getElementById('facultyPhoto').src = data.photo_url;
+      }
+
+    } catch (error) {
+      console.error('Failed to load faculty profile:', error);
+      alert("Error loading faculty profile. Please login again.");
+      localStorage.clear();
+      window.location.href = "login.html";
+    }
   }
-}
 
-
-    loadFacultyProfile();
-  </script>
-</body>
-</html>
+  window.addEventListener('DOMContentLoaded', loadFacultyProfile);
+</script>

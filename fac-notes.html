@@ -5,62 +5,62 @@
   <title>Upload Notes | Faculty</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="fac-notes.css" />
-  
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
   <div class="container">
     <header class="dashboard-header">
-      <button class="back-btn" onclick="window.history.back()" aria-label="Go Back">&#8592;</button>
-      <span class="header-title">Upload Notes</span>
-      <div class="header-right">
-        <button class="hamburger" aria-label="Open menu">
-          <span class="bar"></span>
-          <span class="bar"></span>
-          <span class="bar"></span>
-        </button>
-      </div>
-    </header>
+  <div class="header-left">
+    <button class="back-btn" onclick="window.history.back()" aria-label="Go Back">←</button>
+    <span class="header-title">Upload Notes</span>
+  </div>
+</header>
+
 
     <main>
+      <!-- Select Department & Subject -->
       <section class="notes-section">
-        <div class="section-title">UPLOAD NOTES / RESOURCES</div>
-        <form class="notes-form" enctype="multipart/form-data" onsubmit="submitNotes(event)">
+        <div class="section-title">SELECT CLASS & SUBJECT</div>
+        <form id="note-select-form" class="notes-form">
           <div class="form-row">
-            <label for="class-select">Class</label>
-            <select id="class-select" required>
+            <label for="departmentId">Class</label>
+            <select id="departmentId" required>
               <option value="">-- Select Class --</option>
-              <option value="ii-bsc-cs">II-B.Sc COMPUTER SCIENCE</option>
-              <option value="i-bca">I-B.Sc COMPUTER SCIENCE</option>
-              <option value="iii-bsc-cs">III-B.Sc COMPUTER SCIENCE</option>
             </select>
           </div>
           <div class="form-row">
-            <label for="subject-select">Subject</label>
-            <select id="subject-select" required>
+            <label for="courseId">Subject</label>
+            <select id="courseId" required>
               <option value="">-- Select Subject --</option>
-              <option value="dbms">Database Management Systems</option>
-              <option value="python-lab">Python Programming Lab</option>
-              <option value="ds">Data Structures</option>
             </select>
           </div>
-          <div class="form-row">
-            <label for="notes-title">Title</label>
-            <input type="text" id="notes-title" placeholder="Title of Notes/Resource" required />
-          </div>
-          <div class="form-row">
-            <label for="notes-file">Upload File (PDF/DOC/PPT/IMG)</label>
-            <input type="file" id="notes-file" accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png" required />
-          </div>
-          <button type="submit" class="submit-btn">Upload</button>
         </form>
       </section>
 
+      <!-- Upload Form -->
       <section class="notes-section">
-        <div class="section-title">UPLOADED NOTES</div>
-        <div class="notes-list">
-          <!-- Notes will be dynamically inserted here -->
-        </div>
+        <div class="section-title">UPLOAD FILE</div>
+        <form class="notes-form" id="notesForm" enctype="multipart/form-data">
+          <div class="form-row">
+            <label for="title">Title</label>
+            <input type="text" id="title" placeholder="Title of the notes" required />
+          </div>
+          <div class="form-row">
+            <label for="description">Description</label>
+            <textarea id="description" rows="3" placeholder="Topics covered..." required></textarea>
+          </div>
+          <div class="form-row">
+            <label for="file">Upload File</label>
+            <input type="file" id="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png" required />
+          </div>
+          <button type="submit" class="submit-btn">Upload Notes</button>
+        </form>
+      </section>
+
+      <!-- Display Notes -->
+      <section class="notes-section">
+        <div class="section-title">YOUR NOTES</div>
+        <div class="notes-list" id="notes-list">Loading notes...</div>
       </section>
     </main>
 
@@ -72,84 +72,115 @@
   </div>
 
   <script>
-    async function loadNotes() {
-      const notesList = document.querySelector('.notes-list');
-      notesList.innerHTML = 'Loading notes...';
+    const facultyId = localStorage.getItem("facultyId");
 
+    async function loadDepartments() {
       try {
-        const response = await axios.get('fac-notes.json'); // change to your backend API if needed
-        const notes = response.data;
-
-        if (!Array.isArray(notes) || notes.length === 0) {
-          notesList.innerHTML = '<p>No notes found.</p>';
-          return;
-        }
-
-        notesList.innerHTML = ''; // Clear loading text
-
-        notes.forEach(note => {
-          const noteRow = document.createElement('div');
-          noteRow.classList.add('note-row');
-
-          const titleSpan = document.createElement('span');
-          titleSpan.classList.add('note-title');
-          titleSpan.textContent = note.title;
-
-          const downloadLink = document.createElement('a');
-          downloadLink.href = note.fileUrl;
-          downloadLink.classList.add('download-link');
-          downloadLink.textContent = 'Download';
-          downloadLink.target = '_blank';
-
-          noteRow.appendChild(titleSpan);
-          noteRow.appendChild(downloadLink);
-
-          notesList.appendChild(noteRow);
+        const res = await axios.get("http://localhost:4000/api/departments");
+        const select = document.getElementById("departmentId");
+        select.innerHTML = '<option value="">-- Select Class --</option>';
+        res.data.forEach(dep => {
+          const option = document.createElement("option");
+          option.value = dep.id;
+          option.textContent = dep.name;
+          select.appendChild(option);
         });
-      } catch (error) {
-        notesList.innerHTML = '<p>Error loading notes data.</p>';
-        console.error('Error fetching notes:', error);
+      } catch (err) {
+        console.error("❌ Failed to load departments:", err);
       }
     }
 
-    async function submitNotes(event) {
-      event.preventDefault();
+    async function loadCourses() {
+      try {
+        const res = await axios.get(`http://localhost:4000/api/faculty/${facultyId}/courses`);
+        const select = document.getElementById("courseId");
+        select.innerHTML = '<option value="">-- Select Subject --</option>';
+        res.data.forEach(course => {
+          const option = document.createElement("option");
+          option.value = course.id;
+          option.textContent = `${course.course_name} (${course.course_code})`;
+          select.appendChild(option);
+        });
+      } catch (err) {
+        console.error("❌ Failed to load courses:", err);
+      }
+    }
+async function loadNotes() {
+  const course_id = document.getElementById("courseId").value; // ✅ define it here
 
-      const classSelect = document.getElementById('class-select').value;
-      const subjectSelect = document.getElementById('subject-select').value;
-      const title = document.getElementById('notes-title').value;
-      const fileInput = document.getElementById('notes-file');
+  if (!course_id) {
+    console.warn("No subject selected to load notes.");
+    document.getElementById("notes-list").innerHTML = "<p>Please select a subject to view notes.</p>";
+    return;
+  }
 
-      if (!fileInput.files.length) {
-        alert('Please select a file to upload.');
+  try {
+    const res = await axios.get(`http://localhost:4000/api/faculty/notes/${course_id}`);
+
+    const list = document.getElementById("notes-list");
+    list.innerHTML = "";
+    if (!res.data.length) {
+      list.innerHTML = "<p>No notes uploaded yet.</p>";
+      return;
+    }
+
+    res.data.forEach(note => {
+      const div = document.createElement("div");
+      div.classList.add("note-row");
+      div.innerHTML = `
+  <span class="note-title">${note.title}</span>
+  <a href="http://localhost:4000${note.file_url}" target="_blank" download class="download-link">Download</a>
+`;
+
+      list.appendChild(div);
+    });
+  } catch (err) {
+    console.error("❌ Failed to load notes:", err);
+    document.getElementById("notes-list").innerHTML = "<p>Failed to load notes.</p>";
+  }
+}
+
+
+    document.getElementById("notesForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const department_id = document.getElementById("departmentId").value;
+      const course_id = document.getElementById("courseId").value;
+      const title = document.getElementById("title").value;
+      const description = document.getElementById("description").value;
+      const fileInput = document.getElementById("file");
+
+      if (!department_id || !course_id || !fileInput.files.length) {
+        alert("Please fill in all fields.");
         return;
       }
 
       const formData = new FormData();
-      formData.append('class', classSelect);
-      formData.append('subject', subjectSelect);
-      formData.append('title', title);
-      formData.append('file', fileInput.files[0]);
+      formData.append("department_id", department_id);
+      formData.append("course_id", course_id);
+      formData.append("title", title);
+      formData.append("description", description);
+      formData.append("faculty_id", facultyId);
+      formData.append("file", fileInput.files[0]);
 
       try {
-        const response = await axios.post('/api/upload-notes', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
+        await axios.post("http://localhost:4000/api/faculty/notes", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
         });
-
-        alert('Notes uploaded successfully!');
-
-        // Reload notes list after upload
-        await loadNotes();
-
-        // Reset form
-        event.target.reset();
-      } catch (error) {
-        alert('Failed to upload notes.');
-        console.error('Upload error:', error);
+        alert("✅ Notes uploaded successfully!");
+        document.getElementById("notesForm").reset();
+        loadNotes();
+      } catch (err) {
+        console.error("❌ Upload failed:", err);
+        alert("Upload failed.");
       }
-    }
+    });
 
-    window.addEventListener('DOMContentLoaded', loadNotes);
+   document.addEventListener("DOMContentLoaded", () => {
+  loadDepartments();
+  loadCourses();
+});
+document.getElementById("courseId").addEventListener("change", loadNotes);
+
   </script>
 </body>
 </html>

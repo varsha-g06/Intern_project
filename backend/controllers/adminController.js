@@ -295,7 +295,7 @@ exports.getCourseById = async (req, res) => {
 // Update course by ID
 exports.updateCourse = async (req, res) => {
   const { id } = req.params;
-  const { course_name, course_code, year, department_id, } = req.body;
+  const { course_name, course_code, year, department_id, faculty_id} = req.body;
 
   try {
    
@@ -306,6 +306,7 @@ exports.updateCourse = async (req, res) => {
         course_code,
         year,
         department_id, 
+        faculty_id,
       },
     });
 
@@ -321,6 +322,7 @@ exports.getAllCourses = async (req, res) => {
     const courses = await prisma.course.findMany({
       include: {
         department: true,
+        faculty: true,
       },
     });
     res.status(200).json(courses);
@@ -343,5 +345,86 @@ exports.deleteCourse = async (req, res) => {
     res.status(500).json({ error: 'Failed to delete course' });
   }
 };
+// POST /api/courses/assign
+exports.assignCourseToFaculty = async (req, res) => {
+  const { course_id, faculty_id } = req.body;
 
+  try {
+    const updated = await prisma.course.update({
+      where: { id: course_id },
+      data: { faculty_id },
+    });
+
+    res.status(200).json({ message: 'Course assigned to faculty successfully', course: updated });
+  } catch (error) {
+    console.error('Error assigning course:', error);
+    res.status(500).json({ error: 'Failed to assign course' });
+  }
+};
+
+
+exports.getAttendanceReport = async (req, res) => {
+  try {
+    const students = await prisma.student.findMany({
+      include: {
+        attendances: true
+      }
+    });
+
+    const report = students.map(s => {
+      const total = s.attendances.length;
+      const present = s.attendances.filter(a => a.status === "Present").length;
+      const percent = total > 0 ? ((present / total) * 100).toFixed(1) + "%" : "0%";
+
+      return {
+        roll: s.register_number,
+        name: s.name,
+        total,
+        present,
+        percent
+      };
+    });
+
+    res.json(report);
+  } catch (err) {
+    console.error("Attendance Report Error:", err);
+    res.status(500).json({ error: "Unable to generate attendance report." });
+  }
+};
+
+exports.getMarksReport = async (req, res) => {
+  try {
+    const students = await prisma.student.findMany({
+      include: {
+        studentMarks: {
+          include: {
+            course: true
+          }
+        }
+      }
+    });
+
+    const report = students.map(s => {
+      let total = 0;
+      const marks = {};
+
+      s.studentMarks.forEach(m => {
+        marks[m.course.course_name] = m.total_marks;
+        total += m.total_marks;
+      });
+
+      return {
+        roll: s.register_number,
+        name: s.name,
+        ...marks,
+        total
+      };
+    });
+
+    res.json(report);
+  } catch (err) {
+    console.error("Marks Report Error:", err);
+    res.status(500).json({ error: "Unable to generate marks report." });
+  }
+};
 

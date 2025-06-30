@@ -5,24 +5,26 @@
   <title>Faculty Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="faculty.css">
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
   <!-- Drawer Overlay -->
   <div id="sideDrawerOverlay" class="drawer-overlay" onclick="closeDrawer()"></div>
+
   <!-- Side Drawer Navigation -->
   <nav id="sideDrawer" class="side-drawer">
     <div class="drawer-content">
       <ul class="drawer-menu">
         <li><a href="faculty.html"><span class="menu-icon-text">🏠</span>Home</a></li>
-        
         <li><a href="fac-profile.html"><span class="menu-icon-text">👤</span>Profile</a></li>
       </ul>
       <ul class="drawer-menu logout-menu">
-        <li><a href="login.html"><span class="menu-icon-text">🚪</span>Logout</a></li>
+        <li><a href="#" onclick="logout()"><span class="menu-icon-text">🚪</span>Logout</a></li>
       </ul>
     </div>
   </nav>
 
+  <!-- Header -->
   <header class="dashboard-header">
     <span class="header-title">Dashboard</span>
     <div class="header-right">
@@ -34,16 +36,21 @@
     </div>
   </header>
 
+  <!-- Main Content -->
   <main>
+    <!-- Faculty Info -->
     <div class="faculty-profile-card">
-      <img src="assets/Dr. M. PREETHIi.jpg" alt="Faculty Photo" class="faculty-photo" />
+      <img src="assets/icon.png" alt="Faculty Photo" class="faculty-photo" />
       <div class="faculty-info">
-        <div class="faculty-name">DR. M.Preethi</div>
-        <div class="faculty-id">FAC1234</div>
-        <div class="faculty-dept">Assistant Professor, Computer Science</div>
+        <div class="faculty-name">Loading...</div>
+        <div class="faculty-id"></div>
+        <div class="faculty-dept"></div>
       </div>
     </div>
+
     <div class="spacer"></div>
+
+    <!-- College Features -->
     <section class="college-section">
       <div class="section-title">MY COLLEGE</div>
       <div class="college-features-grid">
@@ -71,36 +78,73 @@
           <img src="assets/annoic.jpg" alt="Create Announcement">
           Create Announcement
         </a>
-       
       </div>
     </section>
-    <section class="timetable-section">
-      <div class="section-title">TODAY'S CLASSES</div>
-      <div class="timetable-info">
-        <ul class="today-classes">
-          <li>09:00 AM: II-B.Sc CS - DBMS</li>
-          <li>11:00 AM:-III- B.Sc CS Python Lab</li>
-        </ul>
-      </div>
-    </section>
+
+   
   </main>
+
+  <!-- Footer -->
   <footer>
     <div class="footer-bar">
       2025 © <strong>ST. XAVIER'S COLLEGE (AUTONOMOUS)</strong>
     </div>
   </footer>
+
+  <!-- Script -->
   <script>
     function openDrawer() {
-      document.getElementById('sideDrawer').classList.add('open');
-      document.getElementById('sideDrawerOverlay').classList.add('show');
+      document.getElementById("sideDrawer").classList.add("open");
     }
+
     function closeDrawer() {
-      document.getElementById('sideDrawer').classList.remove('open');
-      document.getElementById('sideDrawerOverlay').classList.remove('show');
+      document.getElementById("sideDrawer").classList.remove("open");
     }
-    document.addEventListener('keydown', function(e) {
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = "login.html";
+    }
+
+    document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") closeDrawer();
     });
+
+    // Load faculty data
+    window.onload = () => {
+      const facultyId = localStorage.getItem("facultyId");
+      const token = localStorage.getItem("authToken");
+
+      if (!facultyId || !token) {
+        alert("Not logged in. Redirecting...");
+        window.location.href = "login.html";
+        return;
+      }
+
+      axios.get(`http://localhost:4000/api/faculty/${facultyId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        .then((response) => {
+          const faculty = response.data;
+          document.querySelector(".faculty-name").textContent = faculty.name;
+document.querySelector(".faculty-id").textContent = faculty.faculty_code || "FACULTY CODE";
+// document.querySelector(".faculty-dept").textContent =
+//   (faculty.designation || "Designation") + ", " + (faculty.department?.name || "Department");
+
+if (faculty.photo_url) {
+  document.querySelector(".faculty-photo").src = faculty.photo_url;
+}
+
+        })
+        .catch((error) => {
+          console.error("Failed to load faculty:", error);
+          alert("Error fetching faculty info. Please login again.");
+          localStorage.clear();
+          window.location.href = "login.html";
+        });
+    };
   </script>
 </body>
 </html>

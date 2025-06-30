@@ -22,11 +22,16 @@ body, .container {
 .dashboard-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start; 
   background: #b03a2e;
   color: #fff;
   padding: 18px 16px 16px 16px;
   position: relative;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .back-btn {
@@ -44,33 +49,9 @@ body, .container {
   margin-left: 8px;
 }
 
-.header-right {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex: 1 0 auto;
-}
 
-.hamburger {
-  display: flex;
-  flex-direction: column;
-  height: 40px;
-  width: 40px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 6px;
-  margin-left: 8px;
-}
-.hamburger .bar {
-  width: 26px;
-  height: 3.5px;
-  background-color: #fff;
-  margin: 3.5px 0;
-  border-radius: 3px;
-  display: block;
-  transition: background 0.2s;
-}
+
+
 
 main {
   flex: 1;
@@ -187,4 +168,10 @@ footer {
   .marks-section {
     padding: 10px 6px 18px 6px;
   }
+}
+.hamburger,
+.menu-toggle,
+.nav-toggle,
+.sidebar-toggle {
+  display: none !important;
 }

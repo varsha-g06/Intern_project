@@ -14,6 +14,9 @@ const {
   getAllDepartments,
   updateDepartment,
   deleteDepartment,
+  assignCourseToFaculty,
+  getAttendanceReport,
+  getMarksReport
 } = require('../controllers/adminController');
 
 
@@ -59,7 +62,9 @@ router.put('/admin/update/:id', updateAdmin)
 
 //DELETE/ api/delete/:id
 router.delete('/admin/delete/:id', deleteAdmin);
-
+router.post('/courses/assign', assignCourseToFaculty);
+router.get("/attendance", getAttendanceReport);
+router.get("/marks", getMarksReport);
 
 module.exports = router;
 

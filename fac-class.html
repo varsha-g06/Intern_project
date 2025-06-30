@@ -23,7 +23,7 @@
 
     <main>
       <div class="faculty-photo-container">
-        <img src="assets/Dr. M. PREETHIi.jpg" alt="Faculty Photo" class="faculty-photo" />
+        <img src="assets/icon.png" alt="Faculty Photo" class="faculty-photo" />
       </div>
       <section class="profile-section">
         <div class="section-title">CLASSES & SUBJECTS</div>
@@ -39,47 +39,57 @@
       </div>
     </footer>
   </div>
-
-  
   <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const coursesList = document.querySelector('.courses-list');
+  document.addEventListener('DOMContentLoaded', async () => {
+    const coursesList = document.querySelector('.courses-list');
+    const facultyId = localStorage.getItem("facultyId");
+    const token = localStorage.getItem("authToken");
 
-      try {
-        const response = await axios.get('fac-class.json');
-        const data = response.data;
+    if (!facultyId || !token) {
+      alert("Not logged in. Redirecting...");
+      window.location.href = "login.html";
+      return;
+    }
 
-        // Optional: Set dynamic photo if needed
-        const facultyImg = document.querySelector('.faculty-photo');
-        if (data.name.includes("PREETHIi")) {
-          facultyImg.src = 'assets/Dr. M. PREETHIi.jpg';
+    try {
+const response = await axios.get(`http://localhost:4000/api/faculty/${facultyId}/courses`, {
+        headers: {
+          Authorization: `Bearer ${token}`
         }
+      });
 
-        // Clear and load course cards
-        coursesList.innerHTML = '';
+      const data = response.data;
 
-        data.courses.forEach(course => {
-          const card = document.createElement('div');
-          card.className = 'course-card';
-
-          card.innerHTML = `
-            <div class="course-main">
-              <span class="class-label">${course.class}</span>
-              <span class="subject-label">${course.subject}</span>
-            </div>
-            <div class="course-meta">
-              <span class="batch-label">Batch: ${course.batch}</span>
-              <span class="semester-label">Semester: ${course.semester}</span>
-            </div>
-          `;
-
-          coursesList.appendChild(card);
-        });
-      } catch (error) {
-        console.error('Failed to load course data:', error);
-        coursesList.innerHTML = '<p style="color:red;">Failed to load course data.</p>';
+      if (!Array.isArray(data) || data.length === 0) {
+        coursesList.innerHTML = '<p>No courses assigned.</p>';
+        return;
       }
-    });
-  </script>
+
+      coursesList.innerHTML = '';
+
+      data.forEach(course => {
+        const card = document.createElement('div');
+        card.className = 'course-card';
+
+        card.innerHTML = `
+          <div class="course-main">
+            <span class="class-label">Year: ${course.year}</span>
+            <span class="subject-label">${course.course_name} (${course.course_code})</span>
+          </div>
+          <div class="course-meta">
+            <span class="batch-label">Course ID: ${course.id}</span>
+            <span class="semester-label">Dept ID: ${course.department_id}</span>
+          </div>
+        `;
+
+        coursesList.appendChild(card);
+      });
+    } catch (error) {
+      console.error('❌ Failed to load faculty courses:', error);
+      coursesList.innerHTML = '<p style="color:red;">Failed to load course data.</p>';
+    }
+  });
+</script>
+
 </body>
 </html>

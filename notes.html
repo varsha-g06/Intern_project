@@ -15,23 +15,20 @@
 
   <main class="notes-main">
     <section class="notes-profile">
-      <img src="assets/hannah.jpg" alt="Student Photo" class="notes-photo"/>
+<img id="student-photo" src="assets/icon.png" alt="Student Photo" class="notes-photo"/>
       <div class="notes-student-info">
-        <div class="notes-student-name">VARSHA G</div>
-        <div class="notes-student-id">23UCS531</div>
-        <div class="notes-student-course">II-Year-B.Sc COMPUTER SCIENCE</div>
+        <div class="notes-student-name" id="studentName">Loading...</div>
+        <div class="notes-student-id" id="studentId"></div>
+        <div class="notes-student-course" id="studentCourse"></div>
       </div>
     </section>
 
-   
-      <section class="notes-list-section">
-  <div class="section-title">Available Notes</div>
-  <ul class="notes-list" id="notesList">
-    
-  </ul>
-</section>
-
-     
+    <section class="notes-list-section">
+      <div class="section-title">Available Notes</div>
+      <ul class="notes-list" id="notesList">
+        <li>Loading notes...</li>
+      </ul>
+    </section>
   </main>
 
   <footer>
@@ -41,34 +38,77 @@
   </footer>
 
   <script>
-  async function loadNotes() {
-    try {
-      const response = await fetch('notes.json'); // path to your local JSON file
-      if (!response.ok) {
-        throw new Error('Failed to load notes');
-      }
+    const studentId = localStorage.getItem("studentId");
+ const token = localStorage.getItem('authToken');
 
-      const notes = await response.json();
-      const notesList = document.getElementById('notesList');
-      notesList.innerHTML = '';
-
-      notes.forEach(note => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-          <span class="notes-course">${note.course}</span>
-          <a href="${note.fileUrl}" target="_blank" class="download-link">Download PDF</a>
-        `;
-        notesList.appendChild(li);
+    if (!studentId || !token) {
+      alert('You are not logged in!');
+      window.location.href = 'login.html';
+    } else {
+      // ✅ Load student profile data
+      axios.get(`http://localhost:4000/api/student/${studentId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      .then(res => {
+        const student = res.data;
+        document.getElementById('studentName').textContent = student.name;
+        document.getElementById('studentId').textContent = student.register_number;
+        document.getElementById('studentCourse').textContent = `${student.year}-Year - ${student.course}`;
+        if (student.photo_url) {
+          document.getElementById('student-photo').src = student.photo_url;
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load student info:', err);
+        document.getElementById('studentName').textContent = 'Error loading profile';
       });
-    } catch (error) {
-      document.getElementById('notesList').innerHTML = '<li>Error loading notes</li>';
-      console.error('Error fetching notes:', error);
     }
+    
+async function loadNotes() {
+  const notesList = document.getElementById('notesList');
+  notesList.innerHTML = 'Loading notes...';
+
+  try {
+    const res = await axios.get(`http://localhost:4000/api/student/${studentId}/notes`);
+    const notes = res.data;
+    
+
+
+    if (!notes.length) {
+      notesList.innerHTML = '<li>No notes found for your class.</li>';
+      return;
+    }
+
+    // ✅ Clear old content
+    notesList.innerHTML = '';
+
+    // ✅ Loop through and render each note
+  // ✅ Loop through and render each note
+notes.forEach(note => {
+  const li = document.createElement('li');
+  li.innerHTML = `
+    <span class="notes-course">
+      <strong>${note.title}</strong> - ${note.course?.course_name || ''}
+    </span><br/>
+    <small>👨‍🏫 ${note.faculty?.name || 'Faculty'}</small><br/>
+    <a href="http://localhost:4000${note.file_url}" target="_blank" class="download-link">📥 Download</a>
+  `;
+  notesList.appendChild(li);
+});
+
+
+  } catch (err) {
+    console.error("Error fetching notes:", err);
+    notesList.innerHTML = '<li>Error loading notes.</li>';
   }
+}
 
-  // Call it when DOM is ready
-  window.addEventListener('DOMContentLoaded', loadNotes);
-</script>
-
+    document.addEventListener('DOMContentLoaded', async () => {
+     
+      await loadNotes();
+    });
+  </script>
 </body>
 </html>

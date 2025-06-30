@@ -14,12 +14,12 @@ const storage = multer.diskStorage({
 
 // File filter to accept PDFs and DOC/DOCX only
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /pdf|doc|docx/;
+  const allowedTypes = /pdf|doc|docx|ppt|pptx|jpg|jpeg|png/;
   const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
   const mimetype = allowedTypes.test(file.mimetype);
 
   if (extname && mimetype) cb(null, true);
-  else cb(new Error("Only PDF and DOC/DOCX files are allowed"));
+  else cb(new Error("Only valid file types are allowed"));
 };
 
 const upload = multer({ storage, fileFilter });

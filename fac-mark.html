@@ -9,19 +9,13 @@
 </head>
 <body>
   <div class="container">
-    <header class="dashboard-header">
-      <button class="back-btn" onclick="window.history.back()" aria-label="Go Back">&#8592;</button>
-      <span class="header-title">Enter Marks</span>
-      <div class="header-right">
-        <button class="hamburger" aria-label="Open menu">
-          <span class="bar"></span>
-          <span class="bar"></span>
-          <span class="bar"></span>
-        </button>
-      </div>
-    </header>
-
-    <main>
+   <header class="dashboard-header">
+  <div class="header-left">
+    <button class="back-btn" onclick="window.history.back()" aria-label="Go Back">←</button>
+    <span class="header-title">Enter Marks</span>
+  </div>
+</header>
+<main>
       <section class="marks-section">
         <div class="section-title">SELECT CLASS & SUBJECT</div>
         <form class="marks-form" id="select-form">
@@ -29,27 +23,14 @@
             <label for="class-select">Class</label>
             <select id="class-select" required>
               <option value="">-- Select Class --</option>
-              <option value="ii-bsc-cs">II-B.Sc COMPUTER SCIENCE</option>
-              <option value="i-bsc-cs">I-B.Sc COMPUTER SCIENCE</option>
-              <option value="iii-bsc-cs">III-B.Sc COMPUTER SCIENCE</option>
+              <!-- Options loaded dynamically -->
             </select>
           </div>
           <div class="form-row">
-            <label for="subject-select">Subject</label>
-            <select id="subject-select" required>
+            <label for="courseId">Subject</label>
+            <select id="courseId" required>
               <option value="">-- Select Subject --</option>
-              <option value="dbms">Database Management Systems</option>
-              <option value="python-lab">Python Programming Lab</option>
-              <option value="ds">Data Structures</option>
-            </select>
-          </div>
-          <div class="form-row">
-            <label for="assessment-type">Assessment Type</label>
-            <select id="assessment-type" required>
-              <option value="">-- Select Assessment --</option>
-              <option value="internal1">Internal 1</option>
-              <option value="internal2">Internal 2</option>
-              <option value="semester">Semester Exam</option>
+              <!-- Options loaded dynamically -->
             </select>
           </div>
           <button type="submit" class="load-students-btn">Load Students</button>
@@ -59,8 +40,8 @@
       <section class="marks-section" id="marks-entry-section" style="display:none;">
         <div class="section-title">ENTER MARKS</div>
         <form class="marks-entry-form" id="marks-form">
-          <div class="students-list">
-            <!-- Student rows will be dynamically inserted here -->
+          <div class="students-list" id="students-list">
+            <!-- Student inputs will be rendered here -->
           </div>
           <button type="submit" class="submit-btn">Submit Marks</button>
         </form>
@@ -75,121 +56,140 @@
   </div>
 
   <script>
-    let studentsData = {};
+    const facultyId = localStorage.getItem("facultyId");
 
-    // Fetch students.json using Axios
-    async function fetchStudentsData() {
+    async function loadDepartments() {
       try {
-        const response = await axios.get('fac-marks.json');
-        studentsData = response.data;
-      } catch (error) {
-        alert('Error loading student data: ' + error);
+        const res = await axios.get("http://localhost:4000/api/departments");
+        const departments = res.data;
+        const select = document.getElementById('class-select');
+        select.innerHTML = '<option value="">-- Select Class --</option>';
+
+        departments.forEach(dep => {
+          const option = document.createElement('option');
+          option.value = dep.id;
+          option.textContent = dep.name;
+          select.appendChild(option);
+        });
+      } catch (err) {
+        console.error("❌ Failed to load departments:", err);
       }
     }
 
-    // Load students into form based on selected class
-    function loadStudents(selectedClass) {
-      const studentsListDiv = document.querySelector('.students-list');
-      studentsListDiv.innerHTML = '';
-
-      const students = studentsData[selectedClass] || [];
-
-      if (students.length === 0) {
-        studentsListDiv.innerHTML = '<p>No students found for selected class.</p>';
+    async function loadCourses() {
+      if (!facultyId) {
+        alert("Faculty ID not found. Please login again.");
         return;
       }
 
-      students.forEach(student => {
-        const div = document.createElement('div');
-        div.className = 'student-row';
-        div.dataset.studentId = student.id;
+      try {
+        const res = await axios.get(`http://localhost:4000/api/faculty/${facultyId}/courses`);
+        const courses = res.data;
+        const select = document.getElementById('courseId');
+        select.innerHTML = '<option value="">-- Select Subject --</option>';
 
-        div.innerHTML = `
-          <span class="student-name">${student.name}</span>
-          <input type="number" min="0" max="100" placeholder="Marks" required>
-        `;
-
-        studentsListDiv.appendChild(div);
-      });
+        courses.forEach(course => {
+          const option = document.createElement('option');
+          option.value = course.id;
+          option.textContent = `${course.course_name} (${course.course_code})`;
+          select.appendChild(option);
+        });
+      } catch (err) {
+        console.error("Error loading courses:", err);
+        alert("Failed to load courses.");
+      }
     }
 
-    // Wait for DOM to load before setting up event listeners and fetching data
-    document.addEventListener('DOMContentLoaded', async () => {
-      await fetchStudentsData();
+    async function renderStudentInput(departmentId) {
+      const div = document.getElementById("students-list");
+      div.innerHTML = "Loading students...";
 
-      // Handle form submission to show marks entry form
-      document.getElementById('select-form').addEventListener('submit', function(e) {
-        e.preventDefault();
+      try {
+        const res = await axios.get(`http://localhost:4000/api/faculty/students/by-department/${departmentId}`);
+        const students = res.data;
 
-        const selectedClass = document.getElementById('class-select').value;
-        const selectedSubject = document.getElementById('subject-select').value;
-        const assessmentType = document.getElementById('assessment-type').value;
-
-        if (!selectedClass || !selectedSubject || !assessmentType) {
-          alert('Please select Class, Subject and Assessment Type.');
+        if (!students.length) {
+          div.innerHTML = "<p>No students found.</p>";
           return;
         }
 
-        loadStudents(selectedClass);
-
-        // Show marks entry section
-        document.getElementById('marks-entry-section').style.display = 'block';
-
-        // Scroll smoothly to marks section
-        window.scrollTo({
-          top: document.getElementById('marks-entry-section').offsetTop,
-          behavior: 'smooth'
+        div.innerHTML = "";
+        students.forEach(stu => {
+          const row = document.createElement("div");
+          row.className = "student-row";
+          row.setAttribute("data-student-id", stu.id);
+          row.innerHTML = `
+            <span class="student-name">${stu.name}</span>
+            <input type="number" min="0" max="100" placeholder="Marks for ${stu.name}" required />
+          `;
+          div.appendChild(row);
         });
-      });
+      } catch (err) {
+        console.error("Error loading students:", err);
+        div.innerHTML = "<p>Failed to load students.</p>";
+      }
+    }
 
-      // Handle marks submission
-      document.getElementById('marks-form').addEventListener('submit', function(e) {
-        e.preventDefault();
+    document.getElementById("select-form").addEventListener("submit", function(e) {
+      e.preventDefault();
 
-        const selectedClass = document.getElementById('class-select').value;
-        const selectedSubject = document.getElementById('subject-select').value;
-        const assessmentType = document.getElementById('assessment-type').value;
+      const courseId = document.getElementById("courseId").value;
+      const departmentId = document.getElementById("class-select").value;
 
-        const studentRows = document.querySelectorAll('.student-row');
-        let allValid = true;
-        const marksData = [];
+      if (!courseId || !departmentId) {
+        alert("Please select both Class and Subject.");
+        return;
+      }
 
-        studentRows.forEach(row => {
-          const studentId = row.dataset.studentId;
-          const studentName = row.querySelector('.student-name').textContent;
-          const input = row.querySelector('input[type="number"]');
-          const value = input.value.trim();
+      renderStudentInput(departmentId);
+      document.getElementById("marks-entry-section").style.display = "block";
+      window.scrollTo({ top: document.getElementById("marks-entry-section").offsetTop, behavior: "smooth" });
+    });
 
-          if (value === "" || isNaN(value) || Number(value) < 0 || Number(value) > 100) {
-            allValid = false;
-          }
+    document.getElementById("marks-form").addEventListener("submit", async function(e) {
+      e.preventDefault();
 
-          marksData.push({
-            studentId,
-            studentName,
-            marks: Number(value)
-          });
-        });
+      const courseId = document.getElementById("courseId").value;
+      const departmentId = document.getElementById("class-select").value;
+      const studentRows = document.querySelectorAll(".student-row");
 
-        if (!allValid) {
-          alert('Please enter valid marks (0-100) for all students.');
-          return false;
+      for (const row of studentRows) {
+        const studentId = row.getAttribute("data-student-id");
+        const marksInput = row.querySelector("input");
+        const marks = parseInt(marksInput.value.trim());
+
+        if (isNaN(marks) || marks < 0 || marks > 100) {
+          alert(`Invalid marks for student ${studentId}`);
+          return;
         }
 
         const payload = {
-          class: selectedClass,
-          subject: selectedSubject,
-          assessmentType: assessmentType,
-          marks: marksData
+          student_id: studentId,
+          faculty_id: facultyId,
+          department_id: departmentId,
+          course_id: courseId,
+          total_marks: marks
         };
 
-        console.log('Marks JSON payload:', payload);
-        alert('Marks submitted successfully! Check console for JSON data.');
+        console.log("Sending marks:", payload);
 
-        // TODO: Send payload to your backend here using axios.post()
+        try {
+          await axios.post("http://localhost:4000/api/faculty/marks", payload);
+        } catch (err) {
+  const errorData = err.response?.data;
+  console.error("❌ Upload Error for student", studentId, errorData);
+  alert(`Error uploading marks for student ${studentId}.\nMessage: ${JSON.stringify(errorData)}`);
+}
 
-        return false;
-      });
+        
+      }
+
+      alert("✅ All marks uploaded successfully!");
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadDepartments();
+      loadCourses();
     });
   </script>
 </body>

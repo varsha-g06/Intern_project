@@ -1,4 +1,3 @@
-<!-- This is your updated complete HTML file with Attendance and Marks reports in table format, matching your color scheme and structure. -->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -6,264 +5,8 @@
   <meta charset="UTF-8">
   <title>🧠 Computer Science Admin Panel</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    :root {
-      --beige: #f8f4eb;
-      --maroon: #a7563a;
-      --brown: #4c0c0c;
-      --light-brown: #e5b89e;
-      --sidebar-width: 220px;
-    }
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: var(--beige);
-      color: var(--brown);
-    }
-    .admin-container {
-      display: flex;
-      min-height: 100vh;
-    }
-    .sidebar {
-      width: var(--sidebar-width);
-      background: var(--maroon);
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      padding-top: 24px;
-      min-height: 100vh;
-    }
-    .sidebar-title {
-      font-size: 1.3rem;
-      font-weight: bold;
-      padding: 0 24px 32px 24px;
-      letter-spacing: 1px;
-    }
-    .sidebar ul {
-      list-style: none;
-      padding: 0 0 0 0;
-      margin: 0;
-      flex: 1 1 auto;
-    }
-    .sidebar ul li {
-      margin-bottom: 10px;
-    }
-    .sidebar ul li a {
-      color: #fff;
-      text-decoration: none;
-      padding: 10px 24px;
-      display: block;
-      border-left: 4px solid transparent;
-      transition: background 0.2s, border 0.2s;
-      border-radius: 0 20px 20px 0;
-    }
-    .sidebar ul li a.active, .sidebar ul li a:hover {
-      background: var(--light-brown);
-      color: var(--brown);
-      border-left: 4px solid #fff;
-    }
-    .main-content {
-      flex: 1 1 auto;
-      padding: 0;
-      background: var(--beige);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    .admin-header {
-      background: var(--maroon);
-      color: #fff;
-      padding: 18px 36px;
-      font-size: 1.22rem;
-      font-weight: bold;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-radius: 16px 16px 16px 16px;
-      margin:10px 10px;
-    }
-    .admin-user {
-      font-weight: normal;
-      font-size: 1rem;
-    }
-    .logout-btn {
-      color: #fff; 
-      margin-left: 10px; 
-      text-decoration: none; 
-      font-size: 1.2rem;
-      vertical-align: middle;
-    }
+    <link rel="stylesheet" href="admin.css">
 
-    .section {
-      display: none;
-      padding: 32px 48px 32px 48px;
-    }
-    .section.active {
-      display: block;
-      animation: fadein 0.6s;
-    }
-    @keyframes fadein {
-      from { opacity: 0; }
-      to   { opacity: 1; }
-    }
-    h2 { color: var(--maroon); }
-
-    /* Dashboard cards */
-    .dashboard-cards {
-      display: flex;
-      gap: 32px;
-      margin-top: 32px;
-      justify-content: flex-start;
-    }
-    .card {
-      background: var(--light-brown);
-      border-radius: 12px;
-      box-shadow: 0 2px 10px #0001;
-      padding: 28px 38px;
-      min-width: 180px;
-      text-align: center;
-    }
-    .card-title {
-      color: var(--brown);
-      font-size: 1.1rem;
-      margin-bottom: 8px;
-    }
-    .card-value {
-      color: var(--maroon);
-      font-size: 2.2rem;
-      font-weight: bold;
-      margin-top: 4px;
-    }
-
-    /* Table styles */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 30px 0 0 0;
-      background: #fff;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px #0001;
-    }
-    th, td {
-      padding: 13px 18px;
-      text-align: left;
-    }
-    th {
-      background: var(--light-brown);
-      color: var(--maroon);
-      font-weight: bold;
-      border-bottom: 2px solid #efd8c5;
-    }
-    tr:nth-child(even) td {
-      background: #fcf8f3;
-    }
-    tr:last-child td { border-bottom: none; }
-    td {
-      border-bottom: 1px solid #f1e5dc;
-      color: var(--brown);
-    }
-    .action-btns button {
-      margin-right: 4px;
-    }
-
-    /* Form styles */
-    form {
-      margin: 18px 0 12px 0;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      align-items: center;
-    }
-    input, select, button {
-      padding: 8px 13px;
-      font-size: 1rem;
-      border-radius: 5px;
-      border: 1px solid #e3d1c7;
-      margin-right: 0;
-    }
-    input, select {
-      background: #fcf8f3;
-      color: var(--brown);
-      border: 1.5px solid #efd8c5;
-    }
-    button {
-      background: var(--maroon);
-      color: #fff;
-      border: none;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background 0.2s;
-    }
-    button:hover { background: var(--brown); }
-
-    /* Action buttons */
-    .btn { background: var(--maroon); color: #fff; }
-    .btn-edit { background: var(--light-brown); color: var(--brown); }
-    .btn-remove { background: var(--brown); color: #fff; }
-    .btn:active { opacity: 0.8; }
-
-    /* Modal styles */
-    .modal-bg {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(80,40,20,0.17);
-      align-items: center; justify-content: center;
-      z-index: 1000;
-    }
-    .modal-bg.active { display: flex; }
-    .modal {
-      background: #fff;
-      border-radius: 12px;
-      min-width: 340px;
-      max-width: 95vw;
-      padding: 32px 26px 24px 26px;
-      box-shadow: 0 2px 16px #0002;
-      position: relative;
-      color: var(--brown);
-    }
-    .modal h2 { margin-top: 0; color: var(--maroon); }
-    .modal table { width: 100%; box-shadow: none; border-radius: 0; margin: 0; }
-    .modal th { width: 45%; background: none; color: var(--maroon); font-weight: normal; text-align: left; }
-    .modal td { background: none; color: var(--brown);}
-    .close-btn {
-      position: absolute; top: 8px; right: 18px;
-      background: none; border: none; font-size: 1.5rem;
-      cursor: pointer; color: var(--maroon);
-    }
-    @media (max-width: 700px) {
-      .section { padding: 16px 6px; }
-      .dashboard-cards { flex-direction: column; gap: 12px; }
-      .admin-header { padding: 11px 10px; }
-      .sidebar { width: 60px; font-size: 0.9rem; }
-      .sidebar-title { font-size: 0.95rem; padding: 0 6px 18px 6px; }
-    }
-
-    /* Report table tweaks for spacing */
-    #reportOutput table {
-      margin: 16px 0 0 0;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px #0001;
-    }
-    #reportOutput th, #reportOutput td {
-      padding: 13px 18px;
-      text-align: left;
-    }
-    #reportOutput th {
-      background: var(--light-brown);
-      color: var(--maroon);
-      font-weight: bold;
-    }
-    #reportOutput tr:nth-child(even) td {
-      background: #fcf8f3;
-    }
-    #reportOutput td {
-      color: var(--brown);
-    }
-  </style>
 </head>
 <body>
   <div class="admin-container">
@@ -285,6 +28,7 @@
           <a href="login.html" class="logout-btn" title="Logout">⎋</a>
         </span>
       </header>
+     
 
       <!-- Dashboard Section -->
       <section id="dashboard" class="section active">
@@ -297,12 +41,10 @@
             <div class="card-title">Total Faculty</div>
             <div id="facultyCount" class="card-value">0</div>
           </div>
-          <div class="card">
-            <div class="card-title">Courses Offered</div>
-            <div id="courseCount" class="card-value">0</div>
-          </div>
+          
         </div>
       </section>
+
 
       <!-- Students Section -->
       <section id="students" class="section">
@@ -343,20 +85,27 @@
        <section id="faculty" class="section">
   <h2>👩‍🏫 Faculty</h2>
 <form id="facultyForm">
-  <input type="text" id="facultyId" placeholder="ID" required>
+  <input type="hidden" id="facultyId" />
+
   <input type="text" id="facultyName" placeholder="Name" required>
   <input type="email" id="facultyEmail" placeholder="Email" required>
   <input type="tel" id="facultyPhone" placeholder="Phone No" required>
   <input type="date" id="facultyDOB" required>
+  <input type="text" id="facultyExperience" placeholder="Experience (in years)">
+  <input type="text" id="facultyQualification" placeholder="Qualification">
+
   <select id="facultyGender" required>
     <option value="" disabled selected>Select Gender</option>
     <option value="Male">Male</option>
     <option value="Female">Female</option>
     <option value="Other">Other</option>
+    <input type="hidden" id="facultyUserId" />
+
   </select>
+
   <button type="submit">Add Faculty</button>
 </form>
-
+ <p id="errorMsg"></p>
 <table>
   <thead>
     <tr>
@@ -370,29 +119,28 @@
     </tr>
   </thead>
   <tbody id="facultyTable"></tbody>
+
 </table>
 </section>
       <!-- Assign Courses Section -->
       <section id="courses" class="section">
-        <h2>📘 Assign Courses to Faculty</h2>
-        <form id="assignForm">
-          <select id="facultySelect" required></select>
-          <select id="courseSelect" required>
-            <option value="">Select Course</option>
-            <option value="Data Structures">Data Structures</option>
-            <option value="DBMS">DBMS</option>
-            <option value="Software Engineering">Software Engineering</option>
-            <option value="Data Science">Data Science</option>
-            <option value="Lab-RDBMS">Lab-RDBMS</option>
-          </select>
-          <button type="submit">Assign</button>
-        </form>
-        <ul id="assignmentList"></ul>
-      </section>
+  <h2>📘 Assign Courses to Faculty</h2>
+  <form id="assignForm">
+    <select id="facultySelect" required>
+      <option value="">Select Faculty</option>
+    </select>
+    <select id="courseSelect" required>
+      <option value="">Select Course</option>
+    </select>
+    <button type="submit">Assign</button>
+  </form>
 
+  <ul id="assignmentList" style="margin-top: 20px;"></ul>
+</section>
       <!-- Reports Section -->
       <section id="reports" class="section">
         <h2>📑 Generate Reports</h2>
+           
         <button onclick="generateAttendanceReport()">Generate Attendance Report</button>
         <button onclick="generateMarksReport()">Generate Marks Report</button>
         <div id="reportOutput" style="margin-top:22px;"></div>
@@ -443,25 +191,29 @@
     </div>
   </div>
   <!-- Faculty Edit Modal -->
-  <div id="facultyEditModal" class="modal-bg">
-    <div class="modal">
-      <button class="close-btn" onclick="closeFacultyEdit()">&times;</button>
-      <h2>Edit Faculty</h2>
-      <form id="facultyEditForm">
-        <table>
-          <tr><th>ID</th><td><input id="editFacultyId" type="text" required></td></tr>
-          <tr><th>Name</th><td><input id="editFacultyName" type="text" required></td></tr>
-          <tr><th>Email</th><td><input id="editFacultyEmail" type="email" required></td></tr>
-          <tr><th>Phone</th><td><input id="editFacultyPhone" type="text"></td></tr>
-          <tr><th>Gender</th><td><input id="editFacultyGender" type="text"></td></tr>
-          <tr><th>Department</th><td><input id="editFacultyDepartment" type="text"></td></tr>
-          <tr><th>Qualification</th><td><input id="editFacultyQualification" type="text"></td></tr>
-          <tr><th>Joining Date</th><td><input id="editFacultyJoiningDate" type="date"></td></tr>
-        </table>
-        <button type="submit" class="btn" style="margin-top:12px;">Save</button>
-      </form>
-    </div>
+   <!-- Faculty Edit Modal -->
+<div id="facultyEditModal" class="modal-bg">
+  <div class="modal">
+    <button class="close-btn" onclick="closeFacultyEdit()">&times;</button>
+    <h2>Edit Faculty</h2>
+    <form id="facultyEditForm">
+      <table>
+        <tr><th>ID</th><td><input id="editFacultyId" type="text" readonly></td></tr>
+        <tr><th>Name</th><td><input id="editFacultyName" type="text" required></td></tr>
+        <tr><th>Email</th><td><input id="editFacultyEmail" type="email" required></td></tr>
+        <tr><th>Phone</th><td><input id="editFacultyPhone" type="tel"></td></tr>
+        <tr><th>Gender</th><td><input id="editFacultyGender" type="text"></td></tr>
+        <tr><th>Date of Birth</th><td><input id="editFacultyDob" type="date"></td></tr>
+        <tr><th>Qualification</th><td><input id="editFacultyQualification" type="text"></td></tr>
+        <tr><th>Experience</th><td><input id="editFacultyExperience" type="number"></td></tr>
+        <tr><th>User ID</th><td><input id="editFacultyUserId" type="text" readonly></td></tr>
+      </table>
+      <button type="submit" class="btn" style="margin-top:12px;">Save</button>
+    </form>
   </div>
+</div>
+
+  
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="admin.js"></script>
 
@@ -480,7 +232,8 @@
     }
 
     // ----------------- Students Logic -----------------
-   
+   let students = []; 
+
     let editingStudentIdx = null;
 document.getElementById("studentForm").addEventListener("submit", function (e) {
   e.preventDefault();
@@ -512,6 +265,9 @@ function renderStudents(data) {
       <td>${stu.name}</td>
       <td>${stu.email}</td>
       <td>${stu.course}</td>
+      <td>${stu.phone}</td>
+     <td>${stu.dob}</td>
+     <td>${stu.gender}</td>
       <td class="action-btns">
         <button class="btn" onclick="showStudentDetails(${idx})">Details</button>
         <button class="btn btn-edit" onclick="editStudent(${idx})">Edit</button>
@@ -586,100 +342,119 @@ document.getElementById("studentEditForm").addEventListener("submit", function (
   renderStudents(students);
 });
 
-  function removeStudent(idx) {
+function removeStudent(idx) {
   const student = students[idx];
   const userId = student.id;
 
   if (confirm("Are you sure you want to remove this student?")) {
-    console.log('fkljdskj')
+
     axios.delete(`http://localhost:4000/api/student/${userId}`, {
       headers: {
-        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
-    }).then(response => {
+    })
+    .then(response => {
       if (response.data.status === 200 || response.status === 200) {
         alert("Deleted student successfully.");
-        students.splice(idx, 1);  // remove from local array
-        renderStudents();         // refresh UI
+
+        // ✅ Fetch updated list after deletion
+        return axios.get('http://localhost:4000/api/student/', {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
       } else {
-        alert("Failed to delete student.");
+        throw new Error("Failed to delete student.");
       }
-    }).catch(err => {
-      console.error('Delete failed', err);
-      alert("An error occurred while deleting.");
+    })
+    .then(getResponse => {
+      renderStudents(getResponse.data); // Refresh UI with new data
+    })
+    .catch(err => {
+      console.error('Delete or fetch failed:', err);
+      alert("An error occurred while deleting or fetching updated data.");
     });
   }
 }
 
 
+
     // ----------------- Faculty Logic -----------------
-    let faculty = [
-      {
-        id: "F101",
-        name: "Dr. M.Preethi",
-        email: "preethi.m@xaviers.edu",
-        phone: "9876501234",
-        gender: "Female",
-        department: "Computer Science",
-        qualification: "PhD",
-        joining_date: "2024-07-01"
-      }
-    ];
+    let faculty = [];
+
     let editingFacultyIdx = null;
+    document.getElementById("facultyForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+const newFaculty = {
+  id: document.getElementById("facultyId").value,
+  name: document.getElementById("facultyName").value,
+  email: document.getElementById("facultyEmail").value,
+  phone: document.getElementById("facultyPhone").value,
+  gender: document.getElementById("facultyGender").value,
+ dob: document.getElementById("facultyDOB").value,
+  qualification: document.getElementById("facultyQualification").value,
+  experience_years: document.getElementById("facultyExperience").value,
+  user_id: document.getElementById("facultyUserId").value,
+};
 
-    function renderFaculty() {
-      const tbody = document.getElementById("facultyTable");
-      tbody.innerHTML = "";
-      faculty.forEach((fac, idx) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${fac.id}</td>
-          <td>${fac.name}</td>
-          <td>${fac.email}</td>
-          <td class="action-btns">
-            <button class="btn" onclick="showFacultyDetails(${idx})">Details</button>
-            <button class="btn btn-edit" onclick="editFaculty(${idx})">Edit</button>
-            <button class="btn btn-remove" onclick="removeFaculty(${idx})">Remove</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-      updateDashboardCounts();
-      updateFacultyDropdown();
-    }
+ faculty.push(newFaculty);
+  renderFaculty(faculty);
+  this.reset();
+});
 
-    document.getElementById("facultyForm").onsubmit = function(event) {
-      event.preventDefault();
-      const id = document.getElementById("facultyId").value;
-      const name = document.getElementById("facultyName").value;
-      const email = document.getElementById("facultyEmail").value;
+    function renderFaculty(facultyList) {
+  const tbody = document.getElementById("facultyTable");
+  tbody.innerHTML = "";
+  facultyList.forEach((fac, idx) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${fac.id}</td>
+      <td>${fac.name}</td>
+      <td>${fac.email}</td>
+      <td>${fac.phone}</td>
+      <td>${fac.dob}</td>
+      <td>${fac.gender}</td>
+      <td class="action-btns">
+        <button class="btn" onclick="showFacultyDetails(${idx})">Details</button>
+        <button class="btn btn-edit" onclick="editFaculty(${idx})">Edit</button>
+        <button class="btn btn-remove" onclick="removeFaculty(${idx})">Remove</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
 
-      faculty.push({
-        id: id,
-        name: name,
-        email: email,
-        phone: "",
-        gender: "",
-        department: "",
-        qualification: "",
-        joining_date: ""
-      });
-      renderFaculty();
-      event.target.reset();
-    };
+  updateDashboardCounts();
+  updateFacultyDropdown();
+}
 
+
+    
     function showFacultyDetails(idx) {
       const fac = faculty[idx];
+       if (!fac) {
+    console.error(`No faculty found at index ${idx}`);
+    alert("Faculty data not found.");
+    return;
+  }
+
+  let onlyDate = 'N/A';
+  if (fac.dob) {
+    const dob = new Date(fac.dob);
+    if (!isNaN(dob)) {
+      onlyDate = dob.toISOString().split('T')[0];
+    }
+  }
       const details = [
         ["ID", fac.id],
         ["Name", fac.name],
         ["Email", fac.email],
         ["Phone", fac.phone],
         ["Gender", fac.gender],
-        ["Department", fac.department],
+        
+        ["Date of Birth", onlyDate],
         ["Qualification", fac.qualification],
-        ["Joining Date", fac.joining_date]
+        ["Experience", fac.experience_years],
+         ["User ID", fac.user_id]
       ];
       const table = document.getElementById("facultyDetailsTable");
       table.innerHTML = details.map(([k,v]) => `<tr><th>${k}</th><td>${v||"-"}</td></tr>`).join("");
@@ -697,10 +472,11 @@ document.getElementById("studentEditForm").addEventListener("submit", function (
       document.getElementById("editFacultyEmail").value = fac.email;
       document.getElementById("editFacultyPhone").value = fac.phone;
       document.getElementById("editFacultyGender").value = fac.gender;
-      document.getElementById("editFacultyDepartment").value = fac.department;
+      document.getElementById("editFacultyDob").value = fac.dob;
       document.getElementById("editFacultyQualification").value = fac.qualification;
-      document.getElementById("editFacultyJoiningDate").value = fac.joining_date;
-      document.getElementById("facultyEditModal").classList.add("active");
+     document.getElementById("editFacultyExperience").value = fac.experience_years;
+     document.getElementById("editFacultyUserId").value = fac.user_id; 
+     document.getElementById("facultyEditModal").classList.add("active");
     }
     function closeFacultyEdit() {
       document.getElementById("facultyEditModal").classList.remove("active");
@@ -713,60 +489,87 @@ document.getElementById("studentEditForm").addEventListener("submit", function (
       fac.email = document.getElementById("editFacultyEmail").value;
       fac.phone = document.getElementById("editFacultyPhone").value;
       fac.gender = document.getElementById("editFacultyGender").value;
-      fac.department = document.getElementById("editFacultyDepartment").value;
+      fac.dob = document.getElementById("editFacultyDob").value;
       fac.qualification = document.getElementById("editFacultyQualification").value;
-      fac.joining_date = document.getElementById("editFacultyJoiningDate").value;
+      fac.user_id = document.getElementById("editFacultyUserId").value;
+
+      fac.experience_years= document.getElementById("editFacultyExperience").value;
       closeFacultyEdit();
-      renderFaculty();
+      renderFaculty(faculty);
+
     };
 
-    function removeFaculty(idx) {
-      if(confirm("Are you sure you want to remove this faculty member?")) {
-        faculty.splice(idx, 1);
-        renderFaculty();
+   function removeFaculty(idx) {
+  const fac = faculty[idx];
+  const userId = fac.id;  // Use the `fac` variable already extracted
+
+  // ✅ Fix: Declare and get the token
+  const token = localStorage.getItem("authToken");
+
+  if (confirm("Are you sure you want to remove this faculty member?")) {
+    axios.delete(`http://localhost:4000/api/faculty/${userId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
       }
-    }
+    }).then(response => {
+      if (response.data.status === 200 || response.status === 200) {
+        alert("Deleted faculty successfully.");
+        faculty.splice(idx, 1);              // ✅ fixed typo: was `faculty` instead of `faculty`
+        renderFaculty(faculty);             // ✅ ensure this function is defined elsewhere
+      } else {
+        alert("Failed to delete faculty.");
+      }
+    }).catch(err => {
+      console.error('Delete failed', err);
+      alert("An error occurred while deleting.");
+    });
+  }
+}
+let assignments = [];
 
-    // ----------------- Courses/Assignments Logic -----------------
-    function updateFacultyDropdown() {
-      const facSel = document.getElementById("facultySelect");
-      if(!facSel) return;
-      facSel.innerHTML = faculty.map(f => `<option value="${f.id}">${f.name} (${f.id})</option>`).join("");
-    }
-    let assignments = [];
-    document.getElementById("assignForm").onsubmit = function(e) {
-      e.preventDefault();
-      const facId = document.getElementById("facultySelect").value;
-      const course = document.getElementById("courseSelect").value;
-      if(!facId || !course) return;
-      assignments.push({ facId, course });
-      renderAssignments();
-      e.target.reset();
-    };
-    function renderAssignments() {
-      const ul = document.getElementById("assignmentList");
-      ul.innerHTML = assignments.map((a, i) => {
-        const fac = faculty.find(f => f.id === a.facId);
-        return `<li>${fac ? fac.name : "?"} (${a.facId}) assigned to <b>${a.course}</b></li>`;
-      }).join("");
-      document.getElementById("courseCount").textContent = assignments.length;
-    }
+document.getElementById("assignForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+  const faculty = document.getElementById("facultySelect");
+  const course = document.getElementById("courseSelect");
 
-    // ----------------- Dashboard Counts -----------------
+  const facultyName = faculty.options[faculty.selectedIndex].text;
+  const courseName = course.options[course.selectedIndex].text;
+
+  const newAssignment = {
+    faculty: facultyName,
+    course: courseName
+  };
+  assignments.push(newAssignment);
+renderAssignments();
+updateDashboardCounts();
+
+
+ 
+});
+function renderAssignments() {
+  const list = document.getElementById("assignmentList");
+  list.innerHTML = "";
+
+  assignments.forEach((a, i) => {
+    const li = document.createElement("li");
+    li.textContent = `${a.course} → ${a.faculty}`;
+    list.appendChild(li);
+  });
+}
+// ----------------- Dashboard Counts -----------------
     function updateDashboardCounts() {
       document.getElementById("studentCount").textContent = students.length;
       document.getElementById("facultyCount").textContent = faculty.length;
-      document.getElementById("courseCount").textContent = assignments.length;
+
     }
 
     // ----------------- Reports Section with Table Format -----------------
-    function generateAttendanceReport() {
-      // Use students array for demo; in real app, use actual attendance data
-      const attendanceData = [
-        { roll: "23UCS531", name: "G. Varsha", total: 60, present: 56, percent: "93.3%" },
-        { roll: "23UCS532", name: "A. Rahul", total: 60, present: 54, percent: "90.0%" },
-        { roll: "23UCS533", name: "S. Priya", total: 60, present: 59, percent: "98.3%" }
-      ];
+   function generateAttendanceReport() {
+  axios.get("http://localhost:4000/api/attendance")
+    .then(response => {
+      const attendanceData = response.data;
+
       let table = `
         <table>
           <thead>
@@ -791,54 +594,80 @@ document.getElementById("studentEditForm").addEventListener("submit", function (
           </tbody>
         </table>
       `;
-      document.getElementById("reportOutput").innerHTML = `<b>Attendance Report:</b>${table}`;
-    }
 
-    function generateMarksReport() {
-      // Use students array for demo; in real app, use actual marks data
-      const marksData = [
-        { roll: "23UCS531", name: "G. Varsha", ds: 87, dbms: 91, se: 78, total: 256 },
-        { roll: "23UCS532", name: "A. Rahul", ds: 81, dbms: 85, se: 88, total: 254 },
-        { roll: "23UCS533", name: "S. Priya", ds: 93, dbms: 89, se: 95, total: 277 }
-      ];
-      let table = `
+      document.getElementById("reportOutput").innerHTML = `<b>Attendance Report:</b>${table}`;
+    })
+    .catch(error => {
+      console.error("Error fetching attendance report:", error);
+      document.getElementById("reportOutput").innerHTML = "Failed to load attendance report.";
+    });
+}
+function generateMarksReport() {
+  axios.get("http://localhost:4000/api/marks")
+    .then(response => {
+      const data = response.data;
+      if (!Array.isArray(data) || data.length === 0) {
+        document.getElementById("reportOutput").innerHTML = `<b>No marks records found.</b>`;
+        return;
+      }
+
+      // Extract subject names dynamically from first object (excluding roll, name, total)
+      const subjects = Object.keys(data[0]).filter(
+        key => !["roll", "name", "total"].includes(key)
+      );
+
+      const table = `
         <table>
           <thead>
             <tr>
               <th>Roll No</th>
               <th>Name</th>
-              <th>Data Structures</th>
-              <th>DBMS</th>
-              <th>Software Engg.</th>
-              <th>Total</th>
+              ${subjects.map(sub => `<th>${sub}</th>`).join("")}
+              <th>Total Marks</th>
+              <th>Percentage</th>
             </tr>
           </thead>
           <tbody>
-            ${marksData.map(s => `
-              <tr>
-                <td>${s.roll}</td>
-                <td>${s.name}</td>
-                <td>${s.ds}</td>
-                <td>${s.dbms}</td>
-                <td>${s.se}</td>
-                <td>${s.total}</td>
-              </tr>
-            `).join("")}
+            ${data.map(student => {
+              const subjectMarks = subjects.map(sub => `<td>${student[sub]}</td>`).join("");
+              const percentage = ((student.total / (subjects.length * 100)) * 100).toFixed(2) + "%";
+              return `
+                <tr>
+                  <td>${student.roll}</td>
+                  <td>${student.name}</td>
+                  ${subjectMarks}
+                  <td>${student.total}</td>
+                  <td>${percentage}</td>
+                </tr>
+              `;
+            }).join("")}
           </tbody>
         </table>
       `;
+
       document.getElementById("reportOutput").innerHTML = `<b>Marks Report:</b>${table}`;
-    }
+    })
+    .catch(error => {
+      console.error("Error fetching marks report:", error);
+      document.getElementById("reportOutput").innerHTML = `<b>Error loading marks report</b>`;
+    });
+}
+
+    
 function logout() {
   alert("Logging out...");
   // Redirect or implement actual logout as needed
 }
-    // ----------------- Init -----------------
-    renderStudents();
-    renderFaculty();
+    // ----------------- Dropdown for Course Assignment -----------------
+
+
+
+   renderStudents(students);
+renderFaculty(faculty);
+
     renderAssignments();
     updateDashboardCounts();
     updateFacultyDropdown();
   </script>
-</body>
+  </body>
 </html>

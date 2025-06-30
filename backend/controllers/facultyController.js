@@ -156,6 +156,27 @@ exports.createAnnouncement = async (req, res) => {
     res.status(500).json({ error: 'Error creating announcement' });
   }
 };
+// GET all announcements by a faculty
+exports.getFacultyAnnouncements = async (req, res) => {
+  const { facultyId } = req.params;
+
+  try {
+    const announcements = await prisma.announcement.findMany({
+      where: { faculty_id: facultyId },
+      include: {
+        course: { select: { course_name: true } },
+        
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.status(200).json(announcements);
+  } catch (error) {
+    console.error("❌ Error fetching faculty announcements:", error);
+    res.status(500).json({ error: 'Failed to fetch announcements' });
+  }
+};
+
 
 // UPDATE Announcement
 exports.updateAnnouncement = async (req, res) => {
@@ -221,6 +242,8 @@ exports.deleteAnnouncement = async (req, res) => {
     res.status(500).json({ error: 'Error hiding announcement' });
   }
 };
+
+
 exports.createFacultyEducation = async (req, res) => {
   const {
     facultyId,
@@ -360,4 +383,214 @@ exports.createFacultyAcademicDetails = async (req, res) => {
   }
 };
 
+// GET /api/faculty/:facultyId/courses
+exports.getCoursesByFaculty = async (req, res) => {
+  const { facultyId } = req.params;
+
+  try {
+    const courses = await prisma.course.findMany({
+      where: { faculty_id: facultyId }
+    });
+    res.json(courses);
+  } catch (err) {
+    console.error("Error fetching courses:", err);
+    res.status(500).json({ error: "Error fetching courses" });
+  }
+};
+
+exports.getFacultyCourses = async (req, res) => {
+  const facultyId = req.params.id;
+
+  try {
+    const courses = await prisma.course.findMany({
+      where: {
+        faculty_id: facultyId,
+      },
+      select: {
+        id: true,
+        name: true,
+        code: true,
+      },
+    });
+
+    res.json(courses);
+  } catch (err) {
+    console.error("Error fetching courses", err);
+    res.status(500).json({ error: "Error fetching courses" });
+  }
+};
+
+// POST /api/marks/upload
+exports.uploadStudentMarks = async (req, res) => {
+  const { student_id, faculty_id, department_id, course_id, total_marks } = req.body;
+
+  try {
+    // Check if marks already exist for student and course
+    const existing = await prisma.studentMarks.findUnique({
+      where: {
+        student_id_course_id: {
+          student_id,
+          course_id
+        }
+      }
+    });
+
+    if (existing) {
+      return res.status(400).json({ error: 'Marks already uploaded. Please update instead.' });
+    }
+
+   const marks = await prisma.studentMarks.create({
+  data: {
+    student_id,
+    faculty_id,
+    department_id,
+    course_id,
+    total_marks
+  }
+});
+
+
+    res.status(201).json({ message: "Marks uploaded successfully", marks });
+  } catch (error) {
+    console.error("❌ Upload error:", error);
+    res.status(500).json({ error: "Failed to upload marks" });
+  }
+};
+// PUT /api/faculty/marks/:student_id/:course_id
+exports.updateStudentMarks = async (req, res) => {
+  const { student_id, course_id } = req.params;
+  const { total_marks } = req.body;
+
+  try {
+    const updated = await prisma.studentMarks.update({
+      where: {
+        student_id_course_id: {
+          student_id,
+          course_id,
+        }
+      },
+      data: {
+        total_marks
+      }
+    });
+
+    res.json({ message: "Marks updated successfully", updated });
+  } catch (error) {
+    console.error("❌ Update marks error:", error);
+    res.status(500).json({ error: "Failed to update marks" });
+  }
+};
+
+exports.getStudentsByDepartment = async (req, res) => {
+  const { departmentId } = req.params;
+
+  try {
+    const students = await prisma.student.findMany({
+      where: {
+        department_id: departmentId, // this now works
+      },
+      select: {
+        id: true,
+        name: true
+      }
+    });
+
+    res.json(students);
+  } catch (error) {
+    console.error('❌ Error fetching students by department:', error);
+    res.status(500).json({ error: 'Failed to fetch students' });
+  }
+};
+
+// 📌 Faculty marks attendance
+exports.markAttendance = async (req, res) => {
+  const { student_id, course_id, faculty_id, department_id, status } = req.body;
+
+  try {
+    const attendance = await prisma.attendance.create({
+      data: {
+        student_id,
+        course_id,
+        faculty_id,
+        department_id,
+        status
+      }
+    });
+
+    res.status(201).json(attendance);
+  } catch (error) {
+    console.error("❌ Error marking attendance:", error);
+    res.status(500).json({ error: "Failed to mark attendance" });
+  }
+};
+exports.uploadNote = async (req, res) => {
+  const { title, description, course_id, faculty_id } = req.body;
+
+  if (!req.file) {
+    return res.status(400).json({ error: "No file uploaded" });
+  }
+
+  try {
+const file_url = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+
+    const note = await prisma.notes.create({
+      data: {
+        title,
+        description,
+        file_url,
+        course_id,
+        faculty_id,
+      },
+    });
+
+    res.status(201).json(note);
+  } catch (error) {
+    console.error("❌ Error uploading note:", error);
+    res.status(500).json({ error: "Failed to upload note" });
+  }
+};
+exports.getNotesByCourse = async (req, res) => {
+  const { course_id } = req.params;
+  try {
+    const notes = await prisma.notes.findMany({ where: { course_id } });
+    res.json(notes);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch notes' });
+  }
+};
+exports.getOneFaculty = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const faculty = await prisma.faculty.findFirst({
+      where: { id },
+      include: {
+        department: true,
+        user: true
+      }
+    });
+    if (!faculty) return res.status(404).json({ error: "Faculty not found" });
+    res.status(200).json(faculty);
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ error: "Failed to get faculty" });
+  }
+};
+const getCoursesByFaculty = async (req, res) => {
+  try {
+    const { facultyId } = req.params;
+
+    const courses = await prisma.course.findMany({
+      where: { faculty_id: facultyId }
+    });
+
+    if (!courses || courses.length === 0) {
+      return res.status(404).json({ message: 'No courses found for this faculty' });
+    }
+
+    res.status(200).json(courses);
+  } catch (error) {
+    console.error('❌ Error fetching faculty courses:', error);
+    res.status(500).json({ error: 'Failed to fetch faculty courses' });
+  }
+};
 

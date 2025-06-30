@@ -5,64 +5,246 @@
   <title>My Courses | Student Portal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="courses.css" />
+  <style>
+  :root {
+    --maroon: #800000;
+    --beige: #f9f6e6;
+    --brown: #5a3e36;
+    --accent: #8D77AB;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    background-color: var(--beige);
+    color: var(--brown);
+  }
+
+  .courses-header {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background-color: var(--maroon);
+    color: white;
+    font-size: 1.5rem;
+    justify-content: flex-start;
+  }
+
+  .back-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    margin-right: 10px;
+    cursor: pointer;
+  }
+
+  .courses-main {
+    padding: 1rem 2%;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .courses-profile {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background-color: #fff;
+    padding: 1rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .courses-photo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--brown);
+  }
+
+  .courses-student-info {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .section-title {
+    font-weight: bold;
+    margin-bottom: 1rem;
+    font-size: 1.4rem;
+    color: var(--maroon);
+    border-bottom: 2px solid var(--brown);
+    padding-bottom: 0.3rem;
+  }
+
+  .course-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .course-card {
+    background-color: #fff;
+    padding: 1.2rem;
+    border-radius: 12px;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease;
+  }
+
+  .course-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .course-card h3 {
+    margin: 0;
+    color: var(--accent);
+    font-size: 1.2rem;
+  }
+
+  .course-card p {
+    margin: 0.4rem 0;
+    font-size: 0.95rem;
+    color: var(--brown);
+  }
+
+  .footer-bar {
+    text-align: center;
+    padding: 1rem;
+    background-color: var(--maroon);
+    color: white;
+    font-size: 0.9rem;
+    margin-top: 2rem;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 600px) {
+    .courses-header {
+      font-size: 1.2rem;
+      padding: 0.8rem;
+    }
+
+    .back-btn {
+      font-size: 1.2rem;
+    }
+
+    .courses-photo {
+      width: 60px;
+      height: 60px;
+    }
+
+    .course-card {
+      padding: 1rem;
+    }
+
+    .section-title {
+      font-size: 1.2rem;
+    }
+
+    .course-card h3 {
+      font-size: 1.1rem;
+    }
+  }
+</style>
+
 </head>
 <body>
-  <header class="courses-header" style="text-align: center;">
+  <header class="courses-header">
     <button class="back-btn" onclick="window.history.back()" aria-label="Go Back">&#8592;</button>
-    <span class="courses-title">My Courses</span>
+    <span class="courses-title">📚 My Courses</span>
   </header>
+
   <main class="courses-main">
-    <section class="courses-section">
-      <table class="courses-table">
-        <thead>
-          <tr>
-            <th>Course Code</th>
-            <th>Course Title</th>
-            <th>Faculty</th>
-            <th>Image</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td colspan="4">Loading courses...</td></tr>
-        </tbody>
-      </table>
+    <section class="courses-profile">
+      <img src="assets/icon.png" alt="Student Photo" class="courses-photo" id="student-photo" />
+      <div class="courses-student-info">
+        <div class="courses-student-name" id="studentName">Loading...</div>
+        <div class="courses-student-id" id="studentId"></div>
+        <div class="courses-student-course" id="studentCourse"></div>
+      </div>
+    </section>
+
+    <section class="courses-list-section">
+      <div class="section-title">Current Courses</div>
+      <div class="course-list" id="course-list">
+        Loading courses...
+      </div>
     </section>
   </main>
+
   <footer>
     <div class="footer-bar">
       2025 © <strong>ST. XAVIER'S COLLEGE (AUTONOMOUS)</strong>
     </div>
   </footer>
 
-  <!-- Axios CDN -->
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-  
   <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const tbody = document.querySelector('.courses-table tbody');
+    const studentId = localStorage.getItem("studentId");
+    const token = localStorage.getItem("authToken");
 
-    axios.get('http://localhost:4000/api/courses')
-      .then(response => {
-        const courses = response.data;
-        tbody.innerHTML = ''; // Clear loading message
-
-        courses.forEach(course => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${course.code}</td>
-            <td>${course.title}</td>
-            <td>${course.faculty}</td>
-            <td><img src="${course.image}" alt="${course.faculty}" class="faculty-img" width="100"/></td>
-          `;
-          tbody.appendChild(tr);
-        });
-      })
-      .catch(error => {
-        console.error('Error loading courses:', error);
-        tbody.innerHTML = '<tr><td colspan="4">Failed to load courses data.</td></tr>';
+    if (!studentId || !token) {
+      alert("You are not logged in!");
+      window.location.href = "login.html";
+    } else {
+      // ✅ Load student profile
+      axios.get(`http://localhost:4000/api/student/${studentId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }).then(res => {
+        const student = res.data;
+        document.getElementById("studentName").textContent = student.name;
+        document.getElementById("studentId").textContent = student.register_number;
+        document.getElementById("studentCourse").textContent = `${student.year}-Year - ${student.course}`;
+        if (student.photo_url) {
+          document.getElementById("student-photo").src = student.photo_url;
+        }
+      }).catch(err => {
+        console.error("❌ Failed to load student info:", err);
+        document.getElementById("studentName").textContent = "Error loading profile";
       });
-  });
-</script>
 
+      // ✅ Load courses
+      axios.get(`http://localhost:4000/api/student/courses/${studentId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      .then(res => {
+        const list = document.getElementById("course-list");
+        list.innerHTML = "";
+
+        if (res.data.length === 0) {
+          list.innerHTML = "<p>No courses found.</p>";
+          return;
+        }
+
+        res.data.forEach(item => {
+  const course = item.course;
+  const facultyName = course.faculty?.name || "TBA";
+
+  const div = document.createElement("div");
+  div.className = "course-card";
+  div.innerHTML = `
+    <h3>${course.course_name}</h3>
+    <p><strong>Code:</strong> ${course.course_code}</p>
+    <p><strong>Faculty:</strong> ${facultyName}</p>
+  `;
+  list.appendChild(div);
+});
+
+      })
+      .catch(err => {
+        console.error("❌ Failed to load courses:", err);
+        document.getElementById("course-list").innerHTML = "<p>Failed to load courses.</p>";
+      });
+    }
+  </script>
 </body>
 </html>

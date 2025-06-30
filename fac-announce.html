@@ -5,62 +5,59 @@
   <title>Create Announcement | Faculty</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="fac-announce.css" />
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
   <div class="container">
-    <header class="dashboard-header">
-  <button class="back-btn" onclick="window.history.back()" aria-label="Go Back">&#8592;</button>
-  
-  <span class="header-title">Create Announcement</span>
-  
-  <div class="header-right">
-    <button class="hamburger" aria-label="Open menu">
-      <span class="bar"></span>
-      <span class="bar"></span>
-      <span class="bar"></span>
-    </button>
+   <header class="dashboard-header">
+  <div class="header-left">
+    <button class="back-btn" onclick="window.history.back()" aria-label="Go Back">←</button>
+    <span class="header-title">Create Announcement</span>
   </div>
 </header>
 
 
     <main>
+      <!-- Selection -->
       <section class="announcement-section">
-        <div class="section-title">NEW ANNOUNCEMENT</div>
-        <form class="announcement-form" onsubmit="return submitAnnouncement(event)">
+        <div class="section-title">SELECT CLASS & SUBJECT</div>
+        <form class="announcement-form" id="select-form">
           <div class="form-row">
             <label for="class-select">Class</label>
             <select id="class-select" required>
               <option value="">-- Select Class --</option>
-              <option value="ii-bsc-cs">II-B.Sc COMPUTER SCIENCE</option>
-              <option value="i-bsc-cs">I-B.Sc COMPUTER SCIENCE</option>
-              <option value="iii-bsc-cs">III-B.Sc COMPUTER SCIENCE</option>
             </select>
           </div>
           <div class="form-row">
-            <label for="subject-select">Subject</label>
-            <select id="subject-select" required>
+            <label for="courseId">Subject</label>
+            <select id="courseId" required>
               <option value="">-- Select Subject --</option>
-              <option value="dbms">Database Management Systems</option>
-              <option value="python-lab">Python Programming Lab</option>
-              <option value="ds">Data Structures</option>
             </select>
           </div>
+        </form>
+      </section>
+
+      <!-- Announcement Form -->
+      <section class="announcement-section" id="announcement-entry-section">
+        <div class="section-title">NEW ANNOUNCEMENT</div>
+        <form id="announcementForm" class="announcement-form">
           <div class="form-row">
-            <label for="announcement-title">Title</label>
-            <input type="text" id="announcement-title" placeholder="Announcement Title" required />
+            <label for="title">Title</label>
+            <input type="text" id="title" placeholder="Announcement Title" required />
           </div>
           <div class="form-row">
-            <label for="announcement-message">Message</label>
-            <textarea id="announcement-message" rows="4" placeholder="Enter announcement details..." required></textarea>
+            <label for="description">Message</label>
+            <textarea id="description" rows="4" placeholder="Enter announcement details..." required></textarea>
           </div>
           <button type="submit" class="submit-btn">Submit Announcement</button>
         </form>
       </section>
 
+      <!-- Preview Announcements -->
       <section class="announcement-section">
-        <div class="section-title">RECENT ANNOUNCEMENTS</div>
-        <div class="announcements-list" id="announcements-list">
-          <!-- Filled dynamically -->
+        <div class="section-title">YOUR ANNOUNCEMENTS</div>
+        <div class="announcement-list" id="announcement-list">
+          Loading announcements...
         </div>
       </section>
     </main>
@@ -72,77 +69,105 @@
     </footer>
   </div>
 
-  <!-- Axios CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
   <script>
-    const announcementFile = 'fac-announce.json';
+    const facultyId = localStorage.getItem("facultyId");
+
+    async function loadDepartments() {
+      try {
+        const res = await axios.get("http://localhost:4000/api/departments");
+        const departments = res.data;
+        const select = document.getElementById('class-select');
+        select.innerHTML = '<option value="">-- Select Class --</option>';
+
+        departments.forEach(dep => {
+          const option = document.createElement('option');
+          option.value = dep.id;
+          option.textContent = dep.name;
+          select.appendChild(option);
+        });
+      } catch (err) {
+        console.error("❌ Failed to load departments:", err);
+      }
+    }
+
+    async function loadCourses() {
+      try {
+        const res = await axios.get(`http://localhost:4000/api/faculty/${facultyId}/courses`);
+        const courses = res.data;
+        const select = document.getElementById('courseId');
+        select.innerHTML = '<option value="">-- Select Subject --</option>';
+
+        courses.forEach(course => {
+          const option = document.createElement('option');
+          option.value = course.id;
+          option.textContent = `${course.course_name} (${course.course_code})`;
+          select.appendChild(option);
+        });
+      } catch (err) {
+        console.error("Error loading courses:", err);
+      }
+    }
 
     async function loadAnnouncements() {
       try {
-        const res = await axios.get(announcementFile);
-        const data = res.data;
-        const list = document.getElementById('announcements-list');
+        const res = await axios.get(`http://localhost:4000/api/faculty/${facultyId}/announcements`);
+        const announcements = res.data;
+        const list = document.getElementById('announcement-list');
         list.innerHTML = '';
+        if (!announcements.length) {
+          list.innerHTML = '<p>No announcements found.</p>';
+          return;
+        }
 
-        data.forEach(item => {
-          const row = document.createElement('div');
-          row.className = 'announcement-row';
-          row.innerHTML = `
-            <div>
-              <span class="announcement-title">${item.title}</span>
-              <div class="announcement-message">${item.message}</div>
-            </div>
-            <span class="announcement-date">${formatDate(item.date)}</span>
+        announcements.forEach(ann => {
+          const div = document.createElement('div');
+          div.className = 'announcement-card';
+          div.innerHTML = `
+            <h4>${ann.title}</h4>
+            <p>${ann.description}</p>
+            <small>📘 ${ann.course?.course_name || ''} | 🏫 ${ann.department?.name || ''}</small>
           `;
-          list.appendChild(row);
+          list.appendChild(div);
         });
-      } catch (error) {
-        console.error('Error loading announcements:', error);
-        document.getElementById('announcements-list').innerHTML = "<p style='color:red;'>Could not load announcements.</p>";
+      } catch (err) {
+        console.error("Failed to load announcements:", err);
+        document.getElementById('announcement-list').innerHTML = "<p>Failed to load announcements.</p>";
       }
     }
 
-    function formatDate(dateStr) {
-      const options = { year: 'numeric', month: 'short', day: '2-digit' };
-      return new Date(dateStr).toLocaleDateString('en-GB', options);
-    }
+    document.getElementById('announcementForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const title = document.getElementById('title').value;
+      const description = document.getElementById('description').value;
+      const course_id = document.getElementById('courseId').value;
+      const department_id = document.getElementById('class-select').value;
 
-    function submitAnnouncement(event) {
-      event.preventDefault();
-
-      const cls = document.getElementById('class-select').value;
-      const subject = document.getElementById('subject-select').value;
-      const title = document.getElementById('announcement-title').value.trim();
-      const message = document.getElementById('announcement-message').value.trim();
-      const date = new Date().toISOString().split('T')[0];
-
-      if (!cls || !subject || !title || !message) {
-        alert("Please fill all fields");
-        return false;
+      if (!course_id || !department_id) {
+        alert("Please select both class and subject.");
+        return;
       }
 
-      const newAnnouncement = {
-        class: cls,
-        subject,
-        title,
-        message,
-        date
-      };
+      try {
+        await axios.post(`http://localhost:4000/api/faculty/${facultyId}/announcements`, {
+          title,
+          description,
+          course_id,
+          department_id
+        });
+        alert("✅ Announcement Created");
+        document.getElementById('announcementForm').reset();
+        loadAnnouncements();
+      } catch (err) {
+        console.error("❌ Failed to create announcement", err);
+        alert("Failed to create announcement.");
+      }
+    });
 
-      // Simulate saving (you'll need backend or use fs/write in Node)
-      alert("Announcement submitted successfully!");
-      console.log("Saved announcement:", newAnnouncement);
-
-      // Optional: Add to UI instantly
+    document.addEventListener("DOMContentLoaded", () => {
+      loadCourses();
+      loadDepartments();
       loadAnnouncements();
-
-      event.target.reset();
-      return false;
-    }
-
-    // Load on page load
-    loadAnnouncements();
+    });
   </script>
 </body>
 </html>

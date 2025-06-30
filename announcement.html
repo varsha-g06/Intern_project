@@ -7,26 +7,26 @@
   <link rel="stylesheet" href="announcement.css" />
 </head>
 <body>
-  <header class="announcement-header" style="text-align: center;">
+  <header class="announcement-header">
     <button class="back-btn" onclick="window.history.back()" aria-label="Go Back">&#8592;</button>
-    <span class="announcement-title">Announcements</span>
+    <span class="announcement-title" style="text-align: center;">📢 Announcements</span>
   </header>
 
   <main class="announcement-main">
     <section class="announcement-profile">
-      <img src="" alt="Student Photo" class="announcement-photo" id="student-photo" />
+      <img src="assets/icon.png" alt="Student Photo" class="announcement-photo" id="student-photo" />
       <div class="announcement-student-info">
-        <div class="announcement-student-name" id="student-name">Loading...</div>
-        <div class="announcement-student-id" id="student-id"></div>
-        <div class="announcement-student-course" id="student-course"></div>
+        <div class="announcement-student-name" id="studentName">Loading...</div>
+        <div class="announcement-student-id" id="studentId"></div>
+        <div class="announcement-student-course" id="studentCourse"></div>
       </div>
     </section>
 
     <section class="announcement-list-section">
       <div class="section-title">Latest Announcements</div>
-      <ul class="announcement-list" id="announcement-list">
-        <li>Loading announcements...</li>
-      </ul>
+      <div class="announcement-list" id="announcement-list">
+        Loading announcements...
+      </div>
     </section>
   </main>
 
@@ -36,47 +36,66 @@
     </div>
   </footer>
 
-  <!-- Axios CDN -->
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const studentPhoto = document.getElementById('student-photo');
-      const studentName = document.getElementById('student-name');
-      const studentId = document.getElementById('student-id');
-      const studentCourse = document.getElementById('student-course');
-      const announcementList = document.getElementById('announcement-list');
+    const studentId = localStorage.getItem('studentId');
+    const token = localStorage.getItem('authToken');
 
-      axios.get('announcement.json')
-        .then(response => {
-          const data = response.data;
+    if (!studentId || !token) {
+      alert('You are not logged in!');
+      window.location.href = 'login.html';
+    } else {
+      // ✅ Load student profile data
+      axios.get(`http://localhost:4000/api/student/${studentId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      .then(res => {
+        const student = res.data;
+        document.getElementById('studentName').textContent = student.name;
+        document.getElementById('studentId').textContent = student.register_number;
+        document.getElementById('studentCourse').textContent = `${student.year}-Year - ${student.course}`;
+        if (student.photo_url) {
+          document.getElementById('student-photo').src = student.photo_url;
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load student info:', err);
+        document.getElementById('studentName').textContent = 'Error loading profile';
+      });
 
-          // Update student info
-          studentPhoto.src = data.student.photo;
-          studentPhoto.alt = data.student.name;
-          studentName.textContent = data.student.name;
-          studentId.textContent = data.student.id;
-          studentCourse.textContent = data.student.course;
+      // ✅ Load announcements
+      axios.get(`http://localhost:4000/api/student/${studentId}/announcements`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      .then(res => {
+        const list = document.getElementById('announcement-list');
+        list.innerHTML = '';
 
-          // Clear loading message
-          announcementList.innerHTML = '';
+        if (res.data.length === 0) {
+          list.innerHTML = '<p>No announcements found.</p>';
+          return;
+        }
 
-          // Add announcements
-          data.announcements.forEach(item => {
-            const li = document.createElement('li');
-            li.innerHTML = `
-              <span class="announcement-date">${item.date}</span>
-              <span class="announcement-text">${item.text}</span>
-            `;
-            announcementList.appendChild(li);
-          });
-        })
-        .catch(error => {
-          console.error('Error loading announcements:', error);
-          announcementList.innerHTML = '<li>Failed to load announcements.</li>';
-          studentName.textContent = 'Error loading student info';
+        res.data.forEach(announcement => {
+          const div = document.createElement('div');
+          div.className = 'announcement-card';
+          div.innerHTML = `
+            <h3>${announcement.title}</h3>
+            <p>${announcement.description}</p>
+            <small>🧑‍🏫 ${announcement.faculty?.name || 'Faculty'} | 📘 ${announcement.course?.course_name || ''}</small>
+          `;
+          list.appendChild(div);
         });
-    });
+      })
+      .catch(err => {
+        console.error('Failed to load announcements:', err);
+        document.getElementById('announcement-list').innerHTML = '<p>Failed to load announcements.</p>';
+      });
+    }
   </script>
 </body>
 </html>

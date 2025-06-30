@@ -9,19 +9,16 @@
 <body>
   <div class="container">
     <header class="dashboard-header">
-  <button class="back-btn" onclick="window.history.back()" aria-label="Go Back">&#8592;</button>
-  
-  <span class="header-title">Mark Attendance</span>
-  
-  <div class="header-right">
-    <button class="hamburger" aria-label="Open menu">
-      <span class="bar"></span>
-      <span class="bar"></span>
-      <span class="bar"></span>
-    </button>
-  </div>
-</header>
-
+      <button class="back-btn" onclick="window.history.back()" aria-label="Go Back">←</button>
+      <span class="header-title">Mark Attendance</span>
+      <div class="header-right">
+        <button class="hamburger" aria-label="Open menu">
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+        </button>
+      </div>
+    </header>
 
     <main>
       <section class="attendance-section">
@@ -29,21 +26,11 @@
         <form class="attendance-form">
           <div class="form-row">
             <label for="class-select">Class</label>
-            <select id="class-select" required>
-              <option value="">-- Select Class --</option>
-              <option value="ii-bsc-cs">II-B.Sc COMPUTER SCIENCE</option>
-              <option value="i-bsc-cs">I-B.Sc COMPUTER SCIENCE</option>
-              <option value="iii-bsc-cs">III-B.Sc COMPUTER SCIENCE</option>
-            </select>
+            <select id="class-select" required></select>
           </div>
           <div class="form-row">
             <label for="subject-select">Subject</label>
-            <select id="subject-select" required>
-              <option value="">-- Select Subject --</option>
-              <option value="dbms">Database Management Systems</option>
-              <option value="python-lab">Python Programming Lab</option>
-              <option value="ds">Data Structures</option>
-            </select>
+            <select id="subject-select" required></select>
           </div>
           <div class="form-row">
             <label for="date-select">Date</label>
@@ -69,54 +56,89 @@
     </footer>
   </div>
 
-  <!-- Axios CDN -->
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
   <script>
-    async function loadStudents() {
-      const classValue = document.getElementById("class-select").value;
-      const studentsSection = document.getElementById("students-section");
-      const studentsList = document.querySelector(".students-list");
+    const facultyId = localStorage.getItem("facultyId");
 
-      if (!classValue) {
-        alert("Please select a class.");
-        return;
-      }
-
+    async function loadDepartments() {
       try {
-        const response = await axios.get('fac-attend.json');
-        const data = response.data[classValue];
-
-        if (!data) {
-          studentsList.innerHTML = "<p>No students found for selected class.</p>";
-        } else {
-          studentsList.innerHTML = "";
-          data.forEach(student => {
-            const row = document.createElement('div');
-            row.classList.add('student-row');
-            row.innerHTML = `
-              <span class="student-name">${student.name}</span>
-              <div class="attendance-options">
-                <label><input type="radio" name="${student.id}" value="present"> Present</label>
-                <label><input type="radio" name="${student.id}" value="absent"> Absent</label>
-              </div>
-            `;
-            studentsList.appendChild(row);
-          });
-        }
-
-        studentsSection.style.display = 'block';
-        window.scrollTo({ top: studentsSection.offsetTop, behavior: 'smooth' });
-
+        const res = await axios.get("http://localhost:4000/api/departments");
+        const select = document.getElementById("class-select");
+        select.innerHTML = `<option value="">-- Select Class --</option>`;
+        res.data.forEach(dep => {
+          const opt = document.createElement("option");
+          opt.value = dep.id;
+          opt.textContent = dep.name;
+          select.appendChild(opt);
+        });
       } catch (err) {
-        console.error('Error loading students:', err);
-        studentsList.innerHTML = "<p style='color: red;'>Could not load students.json</p>";
+        console.error("Error loading departments:", err);
       }
     }
 
-    function submitAttendance(event) {
+    async function loadSubjects() {
+      if (!facultyId) return;
+      try {
+        const res = await axios.get(`http://localhost:4000/api/faculty/${facultyId}/courses`);
+        const select = document.getElementById("subject-select");
+        select.innerHTML = `<option value="">-- Select Subject --</option>`;
+        res.data.forEach(course => {
+          const opt = document.createElement("option");
+          opt.value = course.id;
+          opt.textContent = course.course_name;
+          select.appendChild(opt);
+        });
+      } catch (err) {
+        console.error("Error loading courses:", err);
+      }
+    }
+
+    async function loadStudents() {
+      const departmentId = document.getElementById("class-select").value;
+      const studentsSection = document.getElementById("students-section");
+      const studentsList = document.querySelector(".students-list");
+
+      if (!departmentId) return alert("Please select a class.");
+
+      try {
+        const res = await axios.get(`http://localhost:4000/api/faculty/students/by-department/${departmentId}`);
+        const students = res.data;
+        if (!students.length) {
+          studentsList.innerHTML = "<p>No students found for selected class.</p>";
+        } else {
+          studentsList.innerHTML = "";
+          students.forEach(stu => {
+            const row = document.createElement("div");
+            row.classList.add("student-row");
+            row.innerHTML = `
+              <span class="student-name">${stu.name}</span>
+              <div class="attendance-options">
+                <label><input type="radio" name="${stu.id}" value="Present" required> Present</label>
+                <label><input type="radio" name="${stu.id}" value="Absent"> Absent</label>
+              </div>`;
+            studentsList.appendChild(row);
+          });
+        }
+        studentsSection.style.display = "block";
+        window.scrollTo({ top: studentsSection.offsetTop, behavior: 'smooth' });
+      } catch (err) {
+        console.error("Error loading students:", err);
+        studentsList.innerHTML = "<p style='color:red;'>Error loading students</p>";
+      }
+    }
+
+    async function submitAttendance(event) {
       event.preventDefault();
+
+      const departmentId = document.getElementById("class-select").value;
+      const courseId = document.getElementById("subject-select").value;
+      const date = document.getElementById("date-select").value;
       const radios = document.querySelectorAll('.attendance-options input[type="radio"]:checked');
+
+      if (!departmentId || !courseId || !date) {
+        alert("Please fill all fields.");
+        return;
+      }
 
       if (radios.length === 0) {
         alert("Please mark attendance for at least one student.");
@@ -124,13 +146,29 @@
       }
 
       const attendanceData = Array.from(radios).map(radio => ({
-        studentId: radio.name,
-        status: radio.value
+        student_id: radio.name,
+        faculty_id: facultyId,
+        course_id: courseId,
+        department_id: departmentId,
+        status: radio.value,
+        date: date
       }));
 
-      console.log("Attendance Submitted:", attendanceData);
-      alert("Attendance submitted successfully!");
+      try {
+        for (const record of attendanceData) {
+          await axios.post("http://localhost:4000/api/faculty/attendance", record);
+        }
+        alert("✅ Attendance submitted successfully!");
+      } catch (err) {
+        console.error("Error submitting attendance:", err);
+        alert("❌ Failed to submit attendance.");
+      }
     }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadDepartments();
+      loadSubjects();
+    });
   </script>
 </body>
 </html>
