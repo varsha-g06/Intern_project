@@ -63,9 +63,22 @@ exports.createFaculty = async (req, res) => {
 exports.getAllFaculty = async (req, res) => {
   try {
     const faculties = await prisma.faculty.findMany({
-      include: {
-        user: true,
-        department: true
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        dob: true,
+        gender: true,
+        qualification: true,
+        experience_years: true,
+        user_id: true, // ✅ Include this
+        department: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
       }
     });
     res.json(faculties);
@@ -74,6 +87,7 @@ exports.getAllFaculty = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch faculty' });
   }
 };
+
 exports.updateFaculty = async (req, res) => {
   const { id } = req.params;
   const {

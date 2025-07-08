@@ -147,7 +147,7 @@ model StudentCourse {
   student_id String
   course_id  String
 
-  student       Student                     @relation(fields: [student_id], references: [id])
+  student     Student @relation(fields: [student_id], references: [id])
   course        Course                      @relation(fields: [course_id], references: [id])
   announcements StudentCourseAnnouncement[]
 

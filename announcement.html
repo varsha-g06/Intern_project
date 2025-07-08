@@ -83,11 +83,17 @@
         res.data.forEach(announcement => {
           const div = document.createElement('div');
           div.className = 'announcement-card';
-          div.innerHTML = `
-            <h3>${announcement.title}</h3>
-            <p>${announcement.description}</p>
-            <small>🧑‍🏫 ${announcement.faculty?.name || 'Faculty'} | 📘 ${announcement.course?.course_name || ''}</small>
-          `;
+          const formattedDate = new Date(announcement.createdAt).toLocaleDateString('en-GB'); // DD/MM/YYYY
+div.innerHTML = `
+  <h3>${announcement.title}</h3>
+  <p>${announcement.description}</p>
+  <small>
+    🧑‍🏫 ${announcement.faculty?.name || 'Faculty'} |
+    📘 ${announcement.course?.course_name || ''} |
+    🗓️ ${formattedDate}
+  </small>
+`;
+
           list.appendChild(div);
         });
       })

@@ -5,13 +5,49 @@ const prisma = new PrismaClient();
 const createStudent = async (req, res) => {
   const {
     name, register_number, course, year, email,
-    phone, gender, dob, photo_url
+    phone, gender, dob, photo_url, department_id
   } = req.body;
+
+  console.log("✅ Checking if user already exists...");
 
   try {
     const existingUser = await prisma.user.findFirst({ where: { email } });
-    if (existingUser) return res.status(409).json({ error: 'User already exists' });
+    console.log("🔁 Proceeding to create student...");
 
+    if (existingUser) {
+      const existingStudent = await prisma.student.findFirst({
+        where: { user_id: existingUser.id }
+      });
+
+      if (existingStudent) {
+        return res.status(409).json({ error: 'Student already exists for this user' });
+      }
+
+      await prisma.student.create({
+        data: {
+          name,
+          register_number,
+          course,
+          year: parseInt(year),
+          email,
+          phone,
+          gender,
+          photo_url,
+          ...(dob && { dob: new Date(dob) }),
+          user: {
+            connect: { id: existingUser.id }
+          },
+          department: {
+            connect: { id: department_id }
+          }
+        }
+      });
+
+      const students = await prisma.student.findMany();
+      return res.status(201).json({ status: 201, data: students });
+    }
+
+    // ✅ Create new user and student
     const roleRecord = await prisma.role.findFirst({ where: { name: 'student' } });
     if (!roleRecord) return res.status(400).json({ error: 'Student role not found' });
 
@@ -26,29 +62,35 @@ const createStudent = async (req, res) => {
       }
     });
 
-    const data = {
-      user_id: user.id,
-      name,
-      register_number,
-      course,
-      year: parseInt(year),
-      email,
-      phone,
-      gender,
-      photo_url
-    };
+    await prisma.student.create({
+      data: {
+        name,
+        register_number,
+        course,
+        year: parseInt(year),
+        email,
+        phone,
+        gender,
+        photo_url,
+        ...(dob && { dob: new Date(dob) }),
+        user: {
+          connect: { id: user.id }
+        },
+        department: {
+          connect: { id: department_id }
+        }
+      }
+    });
 
-    if (dob) data.dob = new Date(dob);
-
-    await prisma.student.create({ data });
     const students = await prisma.student.findMany();
-
     return res.status(201).json({ status: 201, data: students });
+
   } catch (error) {
-    console.error('Create Student Error:', error);
-    res.status(500).json({ error: 'Failed to create student' });
+    console.error('❌ Create Student Error:', error);
+    res.status(500).json({ error: 'Failed to create student', details: error.message });
   }
 };
+
 
 const getAllStudents = async (req, res) => {
   try {
@@ -112,23 +154,57 @@ const updateStudent = async (req, res) => {
     res.status(500).json({ error: 'Failed to update student' });
   }
 };
-
 const deleteStudent = async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params; // user_id
 
   try {
-    const student = await prisma.student.findUnique({ where: { id } });
-    if (!student) return res.status(404).json({ error: 'Student not found' });
+    // ✅ Find the student using user_id
+    const student = await prisma.student.findFirst({
+      where: { user_id: id }
+    });
 
-    await prisma.student.delete({ where: { id } });
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+
+    // ✅ Delete Attendance records
+    await prisma.attendance.deleteMany({ where: { student_id: student.id } });
+
+    // ✅ Find all related student course IDs
+    const studentCourses = await prisma.studentCourse.findMany({
+      where: { student_id: student.id },
+      select: { id: true }
+    });
+    const studentCourseIds = studentCourses.map(sc => sc.id);
+
+    // ✅ Delete student course announcements if any
+    await prisma.studentCourseAnnouncement.deleteMany({
+      where: {
+        student_course_id: { in: studentCourseIds }
+      }
+    });
+
+    // ✅ Delete from student_courses and student_marks
+    await prisma.studentCourse.deleteMany({ where: { student_id: student.id } });
+    await prisma.studentMarks.deleteMany({ where: { student_id: student.id } });
+
+    // ✅ Finally delete student and user
+    await prisma.student.delete({ where: { id: student.id } });
     await prisma.user.delete({ where: { id: student.user_id } });
 
-    return res.status(200).json({ status: 200, message: 'Student and linked user deleted' });
+    res.status(200).json({ status: 200, message: 'Student and all linked data deleted successfully' });
   } catch (error) {
-    console.error('Delete Student Error:', error);
-    res.status(500).json({ error: 'Failed to delete student' });
+    console.error('❌ Delete Student Error:', error);
+    res.status(500).json({
+      error: 'Failed to delete student',
+      details: error.message,
+      meta: error.meta || null,
+      code: error.code || null
+    });
   }
 };
+
+
 
 const assignCourseToStudent = async (req, res) => {
   const { studentId, courseId } = req.body;

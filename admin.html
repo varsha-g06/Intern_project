@@ -53,9 +53,14 @@
   <input type="text" id="studentRoll" placeholder="Roll No" required>
   <input type="text" id="studentName" placeholder="Name" required>
   <input type="email" id="studentEmail" placeholder="Email" required>
-  <input type="number" id="studentClass" placeholder="Class" required>
+  <input type="Text" id="studentClass" placeholder="Class" required>
   <input type="tel" id="studentPhone" placeholder="Phone No" required>
   <input type="date" id="studentDOB" required>
+  <input type="number" id="studentYear" placeholder="Year" required>
+<input type="hidden" id="studentUserId">
+<input type="text" id="studentDepartmentId" hidden value="5bade33c-9373-4d3a-a204-3e60073958b3">
+<input type="text" id="studentCourse" value="B.Sc CS">
+
   <select id="studentGender" required>
     <option value="" disabled selected>Select Gender</option>
     <option value="Male">Male</option>
@@ -64,6 +69,7 @@
   </select>
   <button type="submit">Add Student</button>
 </form>
+<p id="errorMsg"></p>
 
 <table>
   <thead>
@@ -136,11 +142,13 @@
   </form>
 
   <ul id="assignmentList" style="margin-top: 20px;"></ul>
+  
 </section>
+
       <!-- Reports Section -->
       <section id="reports" class="section">
         <h2>📑 Generate Reports</h2>
-           
+
         <button onclick="generateAttendanceReport()">Generate Attendance Report</button>
         <button onclick="generateMarksReport()">Generate Marks Report</button>
         <div id="reportOutput" style="margin-top:22px;"></div>
@@ -175,8 +183,9 @@
           <tr><th>Year</th><td><input id="editStudentYear" type="number" min="1" max="6"></td></tr>
 <tr>
   <th>UserId</th>
-  <td><span id="editUserId">30d08174-53db-44a0-b0f3-dac27547b1a1</span></td>
+  <td><input id="editUserId" type="text" readonly /></td>
 </tr>
+
         </table>
         <button type="submit" class="btn" style="margin-top:12px;">Save</button>
       </form>
@@ -266,7 +275,8 @@ function renderStudents(data) {
       <td>${stu.email}</td>
       <td>${stu.course}</td>
       <td>${stu.phone}</td>
-     <td>${stu.dob}</td>
+     <td>${stu.dob ? new Date(stu.dob).toISOString().split('T')[0] : ''}</td>
+
      <td>${stu.gender}</td>
       <td class="action-btns">
         <button class="btn" onclick="showStudentDetails(${idx})">Details</button>
@@ -344,7 +354,8 @@ document.getElementById("studentEditForm").addEventListener("submit", function (
 
 function removeStudent(idx) {
   const student = students[idx];
-  const userId = student.id;
+  const userId = student.user_id;
+
 
   if (confirm("Are you sure you want to remove this student?")) {
 
@@ -412,7 +423,8 @@ const newFaculty = {
       <td>${fac.name}</td>
       <td>${fac.email}</td>
       <td>${fac.phone}</td>
-      <td>${fac.dob}</td>
+      <td>${fac.dob ? new Date(fac.dob).toISOString().split('T')[0] : ''}</td>
+
       <td>${fac.gender}</td>
       <td class="action-btns">
         <button class="btn" onclick="showFacultyDetails(${idx})">Details</button>
@@ -593,6 +605,9 @@ function renderAssignments() {
             `).join("")}
           </tbody>
         </table>
+        <br>
+        <button onclick="showLowAttendance()">🔍 Show Below 80% Attendance</button>
+        <div id="lowAttendanceOutput" style="margin-top: 22px;"></div>
       `;
 
       document.getElementById("reportOutput").innerHTML = `<b>Attendance Report:</b>${table}`;
@@ -606,17 +621,22 @@ function generateMarksReport() {
   axios.get("http://localhost:4000/api/marks")
     .then(response => {
       const data = response.data;
+      const output = document.getElementById("reportOutput");
+      output.innerHTML = ""; // Clear previous
+
       if (!Array.isArray(data) || data.length === 0) {
-        document.getElementById("reportOutput").innerHTML = `<b>No marks records found.</b>`;
+        output.innerHTML = `<b>No marks records found.</b>`;
         return;
       }
 
-      // Extract subject names dynamically from first object (excluding roll, name, total)
+      // Extract subject names dynamically
       const subjects = Object.keys(data[0]).filter(
         key => !["roll", "name", "total"].includes(key)
       );
 
-      const table = `
+      // Generate marks table HTML
+      const tableHTML = `
+        <b>Marks Report:</b>
         <table>
           <thead>
             <tr>
@@ -645,15 +665,132 @@ function generateMarksReport() {
         </table>
       `;
 
-      document.getElementById("reportOutput").innerHTML = `<b>Marks Report:</b>${table}`;
+      // Inject the table
+      output.innerHTML = tableHTML;
+
+      // Create button and ul manually
+      const button = document.createElement("button");
+      button.textContent = "❌ Show Students with Marks Below 40";
+      button.onclick = () => showLowMarks(subjects);
+      output.appendChild(document.createElement("br"));
+      output.appendChild(document.createElement("br"));
+      output.appendChild(button);
+
+      const ul = document.createElement("ul");
+      ul.id = "lowMarksList";
+      ul.style.marginTop = "20px";
+      output.appendChild(ul);
     })
     .catch(error => {
       console.error("Error fetching marks report:", error);
       document.getElementById("reportOutput").innerHTML = `<b>Error loading marks report</b>`;
     });
 }
+function showLowMarks(subjects) {
+  axios.get("http://localhost:4000/api/marks")
+    .then(response => {
+      const data = response.data;
+      const container = document.getElementById("lowMarksList"); // Now used as a div for table
+      container.innerHTML = ""; // Clear previous
 
-    
+      // Filter students who failed in any subject
+      const lowScorers = data.filter(student =>
+        subjects.some(subject => parseInt(student[subject]) < 40)
+      );
+
+      if (lowScorers.length === 0) {
+        container.innerHTML = "<b>No students with marks below 40 in any subject.</b>";
+        return;
+      }
+
+      // Create table rows only for failing subjects
+      let table = `
+        <table>
+          <thead>
+            <tr>
+              <th>Roll No</th>
+              <th>Name</th>
+              ${subjects.map(sub => `<th>${sub}</th>`).join("")}
+              <th>Failed Subjects</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${lowScorers.map(student => {
+              const subjectCells = subjects.map(sub => {
+                const mark = parseInt(student[sub]);
+                return `<td style="color: ${mark < 40 ? 'red' : 'black'}">${mark}</td>`;
+              }).join("");
+
+              const failedSubs = subjects
+                .filter(sub => parseInt(student[sub]) < 40)
+                .join(", ");
+
+              return `
+                <tr>
+                  <td>${student.roll}</td>
+                  <td>${student.name}</td>
+                  ${subjectCells}
+                  <td>${failedSubs}</td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      `;
+
+      container.innerHTML = `<b>Students with Marks Below 40 in Any Subject:</b><br>${table}`;
+    })
+    .catch(error => {
+      console.error("Error fetching low marks:", error);
+      document.getElementById("lowMarksList").innerHTML = "<b>Error loading low marks data.</b>";
+    });
+}
+
+
+    function showLowAttendance() {
+  axios.get("http://localhost:4000/api/attendance")
+    .then(response => {
+      const attendanceData = response.data;
+      const below80 = attendanceData.filter(student => parseFloat(student.percent) < 80);
+
+      if (below80.length === 0) {
+        document.getElementById("lowAttendanceOutput").innerHTML = "<b>No students found with attendance below 80%.</b>";
+        return;
+      }
+
+      let table = `
+        <table>
+          <thead>
+            <tr>
+              <th>Roll No</th>
+              <th>Name</th>
+              <th>Total Classes</th>
+              <th>Present</th>
+              <th>Attendance %</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${below80.map(s => `
+              <tr>
+                <td>${s.roll}</td>
+                <td>${s.name}</td>
+                <td>${s.total}</td>
+                <td>${s.present}</td>
+                <td>${s.percent}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+
+      document.getElementById("lowAttendanceOutput").innerHTML = `<b>Students with Attendance Below 80%:</b>${table}`;
+    })
+    .catch(error => {
+      console.error("Error fetching low attendance data:", error);
+      document.getElementById("lowAttendanceOutput").innerHTML = "<b>Error loading low attendance report.</b>";
+    });
+}
+
 function logout() {
   alert("Logging out...");
   // Redirect or implement actual logout as needed

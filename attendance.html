@@ -40,6 +40,21 @@
           <tr><td colspan="6">Loading attendance data...</td></tr>
         </tbody>
       </table>
+      <!-- Absent Dates Section -->
+<div class="section-title" style="margin-top: 30px;">❌ Dates You Were Absent</div>
+<table class="attendance-table">
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Course Code</th>
+      <th>Course Title</th>
+    </tr>
+  </thead>
+  <tbody id="absent-dates-tbody">
+    <tr><td colspan="3">Loading absent data...</td></tr>
+  </tbody>
+</table>
+
     </section>
   </main>
 
@@ -121,6 +136,7 @@ if (new Date(item.date) > new Date(grouped[key].latestDate)) {
         });
 
         Object.values(grouped).forEach(item => {
+          
           const absent = item.total - item.present;
           const percent = ((item.present / item.total) * 100).toFixed(1);
           const formattedDate = new Date(item.latestDate).toLocaleDateString('en-GB'); // DD/MM/YYYY
@@ -136,7 +152,27 @@ tr.innerHTML = `
 `;
 
           attendanceTbody.appendChild(tr);
-        });
+        });// Populate Absent Dates Table
+const absentTbody = document.getElementById('absent-dates-tbody');
+absentTbody.innerHTML = ''; // Clear existing content
+
+const absentEntries = data.filter(entry => entry.status === "Absent");
+
+if (absentEntries.length === 0) {
+  absentTbody.innerHTML = '<tr><td colspan="3">🎉 No absences recorded!</td></tr>';
+} else {
+  absentEntries.forEach(entry => {
+    const formattedDate = new Date(entry.date).toLocaleDateString('en-GB'); // DD/MM/YYYY
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${formattedDate}</td>
+      <td>${entry.code}</td>
+      <td>${entry.course}</td>
+    `;
+    absentTbody.appendChild(tr);
+  });
+}
+
 
       } catch (err) {
         console.error("❌ Error loading data:", err);

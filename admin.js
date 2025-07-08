@@ -22,6 +22,28 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
+function fetchStudents() {
+  const token = localStorage.getItem('authToken');
+
+  axios.get('http://localhost:4000/api/student/', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => {
+    students = response.data;            // Save to global array
+    renderStudents(students);           // Re-render table/list
+  })
+  .catch(error => {
+    console.error('Error fetching student data:', error);
+    const errorMsg = document.getElementById('login-error');
+    if (errorMsg) {
+      errorMsg.style.color = "#a52a2a";
+      errorMsg.textContent = "Failed to fetch student list.";
+    }
+  });
+}
 
 
 document.getElementById('studentEditForm').addEventListener('submit', function(e) {
@@ -48,60 +70,74 @@ console.log('User ID:', userId);
       'Content-Type': 'application/json'
     }
   }).then((response) => {
-    console.log(response.data,"gjdfhfskjh")
-    if(response.data.status === 200){
+    
+    
             alert("updated student successFully.");
          closeStudentEdit();
          console.log(response.data.data)
     fetchStudents(); // re-fetch and render
-    }else{
-    alert("Failed to update student.");
-    }
+   
    
   }).catch(err => {
     console.error('Update failed', err);
+    alert("An error occurred while updating.");
+  
   });
 });
 
 
-document.getElementById('studentEditForm').addEventListener('submit', function(e) {
-  e.preventDefault();
+function removeStudent(idx) {
+  const student = students[idx]; // Get student by index
+  if (!student || !student.id) {
+    alert("Invalid student selected.");
+    return;
+  }
 
-// Get the last row (User ID is in the last <tr>)
-const userId = document.getElementById("editUserId").value 
-console.log('User ID:', userId);
+  const studentId = student.id;
+  const token = localStorage.getItem("authToken");
 
-  axios.delete(`http://localhost:4000/api/student/${userId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
-  }).then((response) => {
-    if(response.data.status === 200){
-        alert("Deleted student successFully.");
-        renderStudents();// re-fetch and render
-    }else{
-    alert("Failed to Delete student.");
-    }
-   
-  }).catch(err => {
-    console.error('Update failed', err);
-  });
-});
+  if (!token) {
+    alert("Authorization token not found.");
+    return;
+  }
+
+  if (confirm("Are you sure you want to delete this student?")) {
+    axios.delete(`http://localhost:4000/api/student/${studentId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => {
+      alert("Student deleted successfully.");
+      students.splice(idx, 1);           // Remove from array
+      renderStudents(students);          // Re-render list
+    })
+    .catch(err => {
+      console.error("Delete Student Error:", err);
+      alert("An error occurred while deleting the student.");
+    });
+  }
+}
+
 
 
 document.getElementById('studentForm').addEventListener('submit', function (e) {
   e.preventDefault();
+const data = {
+  register_number: document.getElementById('studentRoll').value,
+  name: document.getElementById('studentName').value,
+  email: document.getElementById('studentEmail').value,
+  year: parseInt(document.getElementById('studentYear').value), // ✅ correct field
+  phone: document.getElementById("studentPhone").value,
+  dob: document.getElementById("studentDOB").value,
+  gender: document.getElementById("studentGender").value,
+  course: document.getElementById("studentCourse").value,
+  department_id: document.getElementById("studentDepartmentId").value // ✅ must be real
+};
 
-  const data = {
-    register_number: document.getElementById('studentRoll').value,
-    name: document.getElementById('studentName').value,
-    email: document.getElementById('studentEmail').value,
-    year: parseInt(document.getElementById('studentClass').value),
-    phone: document.getElementById("studentPhone").value,
-    dob: document.getElementById("studentDOB").value,
-    gender: document.getElementById("studentGender").value,
-  };
+  
+
 
   const errorMsg = document.getElementById('login-error');
 
@@ -117,10 +153,14 @@ document.getElementById('studentForm').addEventListener('submit', function (e) {
     renderStudents(res.data.data); // Refresh table
   })
   .catch(err => {
-    console.error(err);
+  console.error(err);
+  const errorMsg = document.getElementById("errorMsg");
+  if (errorMsg) {
     errorMsg.style.color = "#a52a2a";
     errorMsg.textContent = "Failed to add student.";
-  });
+  }
+});
+
 });
 
 document.addEventListener('DOMContentLoaded', function () {

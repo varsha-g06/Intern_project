@@ -111,11 +111,12 @@
             const row = document.createElement("div");
             row.classList.add("student-row");
             row.innerHTML = `
-              <span class="student-name">${stu.name}</span>
-              <div class="attendance-options">
-                <label><input type="radio" name="${stu.id}" value="Present" required> Present</label>
-                <label><input type="radio" name="${stu.id}" value="Absent"> Absent</label>
-              </div>`;
+  <span class="student-name">${stu.name}</span>
+  <div class="attendance-options">
+    <label><input type="radio" name="${stu.id}" value="Present" checked required> Present</label>
+    <label><input type="radio" name="${stu.id}" value="Absent"> Absent</label>
+  </div>`;
+
             studentsList.appendChild(row);
           });
         }
